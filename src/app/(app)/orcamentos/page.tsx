@@ -51,12 +51,12 @@ export default async function OrcamentosPage() {
       {quotes.map((q) => (
         <Card key={q.id}>
           <CardContent className="flex items-center gap-3 p-3">
-            <Link href={`/orcamentos/${q.id}`} className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3">
+            <Link href={`/orcamentos/${q.id}`} className="flex min-h-11 min-w-0 flex-1 items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
                   #{q.number} · {q.customerName}
                 </p>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <StatusBadge status={q.status} />
                   {q.status === "SENT" && expiryLabel(q.validUntil, now) && (
                     <span className="text-xs font-bold text-warning">{expiryLabel(q.validUntil, now)}</span>
