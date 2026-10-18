@@ -1,7 +1,14 @@
 import webpush from "web-push";
 import { db } from "@/lib/db";
 
-export type PushPayload = { title: string; body: string; url: string; tag?: string };
+export type PushPayload = {
+  title: string;
+  body: string;
+  url: string;
+  tag?: string;
+  actions?: { action: string; title: string }[];
+  waUrl?: string;
+};
 
 let configured: boolean | null = null;
 
@@ -34,7 +41,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
         } catch (e) {
           const status = (e as { statusCode?: number }).statusCode;
           if (status === 404 || status === 410) await db.pushSubscription.deleteMany({ where: { id: s.id } });
-          else console.error("[push] falha", status ?? e);
+          else console.error(JSON.stringify({ level: "error", scope: "push", userId, statusCode: status ?? null, tag: payload.tag ?? null }));
         }
       }),
     );

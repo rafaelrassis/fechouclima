@@ -16,14 +16,21 @@ self.addEventListener("push", (event) => {
       icon: "/icons/192",
       badge: "/icons/192",
       tag: data.tag || undefined,
-      data: { url: typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/inicio" },
+      actions: Array.isArray(data.actions) ? data.actions : undefined,
+      data: {
+        url: typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/inicio",
+        waUrl: typeof data.waUrl === "string" && data.waUrl.startsWith("https://wa.me/") ? data.waUrl : undefined,
+      },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || "/inicio", self.location.origin).href;
+  const url =
+    event.action === "whatsapp" && event.notification.data?.waUrl
+      ? event.notification.data.waUrl
+      : new URL(event.notification.data?.url || "/inicio", self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const c of list) {

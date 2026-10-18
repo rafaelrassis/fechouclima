@@ -51,10 +51,12 @@ describe("aviso ao técnico quando o cliente responde", () => {
 
     expect(sendNotification).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(sendNotification.mock.calls[0][1]);
-    expect(payload.title).toBe("Fechou! Maria Souza aprovou o orçamento #1");
+    expect(payload.title).toBe("✅ Fechou! Maria Souza aprovou o orçamento #1");
     expect(payload.body).toContain("200,00");
     expect(payload.url).toBe(`/orcamentos/${q.data.id}`);
     expect(payload.url.startsWith("/")).toBe(true);
+    expect(payload.actions).toEqual([{ action: "whatsapp", title: "Chamar no WhatsApp" }]);
+    expect(payload.waUrl).toMatch(/^https:\/\/wa\.me\/55\d+\?text=/);
   });
 
   it("recusa com motivo vai no corpo do push; orçamento inexistente não lança", async () => {
