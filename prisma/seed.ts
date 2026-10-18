@@ -48,6 +48,9 @@ async function main() {
     });
   }
 
+  // Conta admin do painel /admin (único e-mail, por ora). Idempotente: só marca, não cria usuário.
+  await db.user.updateMany({ where: { email: "rrodriguesdeassis@gmail.com" }, data: { isAdmin: true } });
+
   console.log("Seed concluído");
 }
 

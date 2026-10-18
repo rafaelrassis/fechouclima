@@ -23,3 +23,11 @@ export async function requireUserId(): Promise<string> {
   if (!id) redirect("/api/auth/sessao-revogada");
   return id;
 }
+
+// Páginas e actions de /admin: redireciona quem não é admin para /inicio (sem revelar que a rota existe).
+export async function requireAdmin(): Promise<string> {
+  const id = await requireUserId();
+  const user = await db.user.findUnique({ where: { id }, select: { isAdmin: true } });
+  if (!user?.isAdmin) redirect("/inicio");
+  return id;
+}

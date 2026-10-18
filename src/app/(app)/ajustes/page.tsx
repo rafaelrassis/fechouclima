@@ -15,6 +15,7 @@ import { ReferralCard } from "@/components/settings/referral-card";
 import { WaTemplateForm } from "@/components/settings/wa-template-form";
 import { NudgeTemplateForm } from "@/components/settings/nudge-template-form";
 import { DEFAULT_NUDGE_TEMPLATE } from "@/lib/followup";
+import Link from "next/link";
 
 export const metadata = { title: "Ajustes" };
 
@@ -35,6 +36,7 @@ export default async function AjustesPage() {
         pixCity: true,
         brandColor: true,
         defaultReminderMonths: true,
+        isAdmin: true,
       },
     }),
     ensureReferralCode(),
@@ -54,6 +56,11 @@ export default async function AjustesPage() {
       <NudgeTemplateForm initial={user.nudgeTemplate ?? DEFAULT_NUDGE_TEMPLATE} sender={user.companyName ?? user.name} />
       <DefaultReminderForm initial={user.defaultReminderMonths} />
       {referralCode.ok && <ReferralCard link={`${baseUrl}/cadastro?ref=${referralCode.data.code}`} count={referralCount} />}
+      {user.isAdmin && (
+        <Link href="/admin" className="flex h-11 items-center justify-center rounded-md border border-input text-sm font-semibold">
+          Painel admin
+        </Link>
+      )}
       <AccountSection />
       <LegalLinks />
     </div>
