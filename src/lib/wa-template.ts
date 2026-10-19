@@ -20,6 +20,12 @@ export const WA_MODELS = [
 
 export const DEFAULT_WA_TEMPLATE = WA_MODELS[1].text;
 
+// Mensagem sugerida no botão "Chamar no WhatsApp" do aviso de aprovação (editável em Ajustes).
+// A de recusa é fixa: é um caso raro e mais delicado para deixar no automático.
+export const APPROVAL_PLACEHOLDERS = ["{cliente}", "{numero}", "{valor}", "{tecnico}"] as const;
+export const DEFAULT_APPROVAL_WA_TEMPLATE =
+  "Olá, {cliente}! Show, recebi sua aprovação do orçamento #{numero} de {valor}. Vamos combinar a data do serviço?";
+
 export function renderWaTemplate(
   template: string,
   vars: { cliente: string; valor: string; link: string; numero: number | string; tecnico: string },

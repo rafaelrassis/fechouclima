@@ -7,7 +7,7 @@ import { requireUserId } from "@/lib/session";
 import { DEFAULT_BRAND, isBrandColor } from "@/lib/brand";
 import { MAX_LOGO_BYTES, detectLogoType } from "@/lib/logo";
 import { generateReferralCode } from "@/lib/referral";
-import { nudgeTemplateSchema, waTemplateSchema } from "@/lib/validations/auth";
+import { approvalWaTemplateSchema, nudgeTemplateSchema, waTemplateSchema } from "@/lib/validations/auth";
 import { pixSchema } from "@/lib/validations/pix";
 import { pushSubscriptionSchema, type PushSubscriptionInput } from "@/lib/validations/push";
 import { reminderMonthsSchema } from "@/lib/validations/service";
@@ -73,6 +73,25 @@ export async function resetNudgeTemplate(): Promise<ActionResult> {
   revalidatePath("/ajustes");
   revalidatePath("/inicio");
   revalidatePath("/orcamentos");
+  return { ok: true, data: undefined };
+}
+
+export async function saveApprovalWaTemplate(template: string): Promise<ActionResult> {
+  const userId = await requireUserId();
+  const parsed = approvalWaTemplateSchema.safeParse({ template });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Mensagem inválida" };
+  }
+  await db.user.update({ where: { id: userId }, data: { approvalWaTemplate: parsed.data.template } });
+  revalidatePath("/ajustes");
+  return { ok: true, data: undefined };
+}
+
+// Volta ao modelo padrão de pós-aprovação
+export async function resetApprovalWaTemplate(): Promise<ActionResult> {
+  const userId = await requireUserId();
+  await db.user.update({ where: { id: userId }, data: { approvalWaTemplate: null } });
+  revalidatePath("/ajustes");
   return { ok: true, data: undefined };
 }
 

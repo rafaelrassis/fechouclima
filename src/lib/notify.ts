@@ -3,6 +3,7 @@ import { escapeHtml, sendEmail } from "@/lib/email";
 import { formatBRL } from "@/lib/money";
 import { sendPushToUser } from "@/lib/push";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { DEFAULT_APPROVAL_WA_TEMPLATE, renderWaTemplate } from "@/lib/wa-template";
 
 // Avisa o técnico por e-mail quando o cliente responde. Nunca lança: falha de e-mail não pode quebrar a resposta do cliente.
 export async function notifyQuoteResponse(publicId: string, outcome: "APPROVED" | "REJECTED"): Promise<void> {
@@ -17,7 +18,7 @@ export async function notifyQuoteResponse(publicId: string, outcome: "APPROVED" 
         totalCents: true,
         rejectReason: true,
         userId: true,
-        user: { select: { email: true, name: true } },
+        user: { select: { email: true, name: true, companyName: true, approvalWaTemplate: true } },
       },
     });
     if (!q) return;
@@ -34,7 +35,13 @@ export async function notifyQuoteResponse(publicId: string, outcome: "APPROVED" 
     const reason = !approved && q.rejectReason ? `Motivo: ${q.rejectReason}` : "";
 
     const waMessage = approved
-      ? `Olá, ${q.customerName}! Show, recebi sua aprovação do orçamento #${q.number}. Vamos combinar a data do serviço?`
+      ? renderWaTemplate(q.user.approvalWaTemplate ?? DEFAULT_APPROVAL_WA_TEMPLATE, {
+          cliente: q.customerName,
+          valor: total,
+          link: "",
+          numero: q.number,
+          tecnico: q.user.companyName ?? q.user.name,
+        })
       : `Olá, ${q.customerName}, vi que o orçamento #${q.number} não foi aprovado. Posso ajustar algo?`;
     const waUrl = buildWhatsAppUrl(q.customerPhone, waMessage);
 
