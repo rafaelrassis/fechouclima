@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/session";
+import { AppBadgeReset } from "@/components/app-badge-reset";
 import { BottomNav } from "@/components/bottom-nav";
 import { LogoutButton } from "@/components/logout-button";
 import { SidebarNav } from "@/components/sidebar-nav";
@@ -17,6 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh bg-background lg:flex">
+      <AppBadgeReset />
       <SidebarNav userName={session.user.name ?? "Técnico"} />
       <div className="flex min-h-dvh flex-1 flex-col lg:min-w-0">
         <header className="sticky top-0 z-20 border-b border-border bg-card lg:hidden">
