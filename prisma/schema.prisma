@@ -31,6 +31,7 @@ model User {
   companyName           String?
   waTemplate            String?
   nudgeTemplate         String?
+  approvalWaTemplate    String?
   emailDigest           Boolean   @default(true)
   termsAcceptedAt       DateTime?
   pixKey                String?

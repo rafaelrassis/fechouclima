@@ -21,6 +21,10 @@ export const nudgeTemplateSchema = z.object({
   template: z.string().trim().min(10, "Mensagem muito curta").max(400, "Máximo de 400 caracteres"),
 });
 
+export const approvalWaTemplateSchema = z.object({
+  template: z.string().trim().min(10, "Mensagem muito curta").max(400, "Máximo de 400 caracteres"),
+});
+
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail inválido").max(160),
 });

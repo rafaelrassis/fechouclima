@@ -3,7 +3,8 @@ import { calcLineCents, formatBRL } from "@/lib/money";
 import { buildWhatsAppUrl, normalizeBrPhone } from "@/lib/whatsapp";
 import { DEFAULT_WA_TEMPLATE, renderWaTemplate } from "@/lib/wa-template";
 import { createQuoteSchema } from "@/lib/validations/quote";
-import { waTemplateSchema } from "@/lib/validations/auth";
+import { approvalWaTemplateSchema, waTemplateSchema } from "@/lib/validations/auth";
+import { APPROVAL_PLACEHOLDERS, DEFAULT_APPROVAL_WA_TEMPLATE } from "@/lib/wa-template";
 
 describe("money", () => {
   it("formata centavos em BRL", () => {
@@ -37,6 +38,25 @@ describe("template do WhatsApp", () => {
   it("exige {link} no schema", () => {
     expect(waTemplateSchema.safeParse({ template: "Olá, segue o orçamento" }).success).toBe(false);
     expect(waTemplateSchema.safeParse({ template: "Olá, segue o orçamento {link}" }).success).toBe(true);
+  });
+});
+
+describe("mensagem de WhatsApp pós-aprovação", () => {
+  const vars = { cliente: "Maria", valor: "R$ 10,00", link: "", numero: 3, tecnico: "João" };
+  it("o modelo padrão usa cliente, número e valor, sem exigir {link}", () => {
+    const rendered = renderWaTemplate(DEFAULT_APPROVAL_WA_TEMPLATE, vars);
+    expect(rendered).toContain("Maria");
+    expect(rendered).toContain("#3");
+    expect(rendered).toContain("R$ 10,00");
+  });
+  it("aceita mensagem curta sem {link}", () => {
+    expect(approvalWaTemplateSchema.safeParse({ template: "Oi {cliente}, aprovado!" }).success).toBe(true);
+  });
+  it("rejeita mensagem muito curta", () => {
+    expect(approvalWaTemplateSchema.safeParse({ template: "Oi" }).success).toBe(false);
+  });
+  it("placeholders conhecidos não incluem {link}", () => {
+    expect(APPROVAL_PLACEHOLDERS).not.toContain("{link}");
   });
 });
 

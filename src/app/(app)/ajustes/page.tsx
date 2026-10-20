@@ -14,8 +14,10 @@ import { DefaultReminderForm } from "@/components/settings/default-reminder-form
 import { ReferralCard } from "@/components/settings/referral-card";
 import { WaTemplateForm } from "@/components/settings/wa-template-form";
 import { NudgeTemplateForm } from "@/components/settings/nudge-template-form";
+import { ApprovalWaTemplateForm } from "@/components/settings/approval-wa-template-form";
 import { DEFAULT_NUDGE_TEMPLATE } from "@/lib/followup";
 import Link from "next/link";
+import { DEFAULT_APPROVAL_WA_TEMPLATE } from "@/lib/wa-template";
 
 export const metadata = { title: "Ajustes" };
 
@@ -29,6 +31,7 @@ export default async function AjustesPage() {
         companyName: true,
         waTemplate: true,
         nudgeTemplate: true,
+        approvalWaTemplate: true,
         emailDigest: true,
         logoUpdatedAt: true,
         pixKey: true,
@@ -54,6 +57,10 @@ export default async function AjustesPage() {
       <EmailDigestToggle initial={user.emailDigest} />
       <WaTemplateForm initial={user.waTemplate ?? DEFAULT_WA_TEMPLATE} sender={user.companyName ?? user.name} />
       <NudgeTemplateForm initial={user.nudgeTemplate ?? DEFAULT_NUDGE_TEMPLATE} sender={user.companyName ?? user.name} />
+      <ApprovalWaTemplateForm
+        initial={user.approvalWaTemplate ?? DEFAULT_APPROVAL_WA_TEMPLATE}
+        sender={user.companyName ?? user.name}
+      />
       <DefaultReminderForm initial={user.defaultReminderMonths} />
       {referralCode.ok && <ReferralCard link={`${baseUrl}/cadastro?ref=${referralCode.data.code}`} count={referralCount} />}
       {user.isAdmin && (

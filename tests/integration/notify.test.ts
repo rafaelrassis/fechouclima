@@ -51,10 +51,30 @@ describe("aviso ao técnico quando o cliente responde", () => {
 
     expect(sendNotification).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(sendNotification.mock.calls[0][1]);
-    expect(payload.title).toBe("Fechou! Maria Souza aprovou o orçamento #1");
+    expect(payload.title).toBe("✅ Fechou! Maria Souza aprovou o orçamento #1");
     expect(payload.body).toContain("200,00");
     expect(payload.url).toBe(`/orcamentos/${q.data.id}`);
     expect(payload.url.startsWith("/")).toBe(true);
+    expect(payload.actions).toEqual([{ action: "whatsapp", title: "Chamar no WhatsApp" }]);
+    expect(payload.waUrl).toMatch(/^https:\/\/wa\.me\/55\d+\?text=/);
+    expect(decodeURIComponent(payload.waUrl.split("text=")[1])).toContain("Vamos combinar a data do serviço");
+  });
+
+  it("aprovação com mensagem de WhatsApp customizada em Ajustes", async () => {
+    const u = await makeUser("tec@t.com");
+    loginAs(u.id);
+    await savePushSubscription({
+      endpoint: "https://push.example.com/send/3",
+      keys: { p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM", auth: "tBHItJI5svbpez7KI4CCXg" },
+    });
+    await db.user.update({ where: { id: u.id }, data: { approvalWaTemplate: "Oi {cliente}, orçamento #{numero} aprovado!" } });
+    const q = await createQuote(quoteInput({ customerName: "Maria Souza" }) as never);
+    if (!q.ok) throw new Error(q.error);
+
+    await notifyQuoteResponse(q.data.publicId, "APPROVED");
+
+    const payload = JSON.parse(sendNotification.mock.calls[0][1]);
+    expect(decodeURIComponent(payload.waUrl.split("text=")[1])).toBe("Oi Maria Souza, orçamento #1 aprovado!");
   });
 
   it("recusa com motivo vai no corpo do push; orçamento inexistente não lança", async () => {
