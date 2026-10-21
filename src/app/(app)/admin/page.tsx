@@ -1,20 +1,26 @@
 import { requireAdmin } from "@/lib/session";
-import { getAdminOverview } from "@/lib/admin-queries";
+import { getAdminOverview, parseDateRangeParams } from "@/lib/admin-queries";
 import { formatBRL } from "@/lib/money";
 import { Stat } from "@/components/admin/stat";
+import { DateRangeFilter } from "@/components/admin/date-range-filter";
 
 export const metadata = { title: "Admin" };
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   await requireAdmin();
-  const o = await getAdminOverview();
+  const { from, to } = await searchParams;
+  const range = parseDateRangeParams({ from, to });
+  const o = await getAdminOverview(range);
 
   const vistosPct = o.enviados > 0 ? Math.round((o.vistos / o.enviados) * 100) : 0;
   const aprovadosPct = o.enviados > 0 ? Math.round((o.aprovados / o.enviados) * 100) : 0;
+  const filtrado = !!(from || to);
 
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Visão geral</h1>
+
+      <DateRangeFilter basePath="/admin" from={from} to={to} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Técnicos</h2>
@@ -23,6 +29,7 @@ export default async function AdminPage() {
           <Stat label="Ativos" value={String(o.tecnicosAtivos)} hint={o.tecnicosInativos > 0 ? `${o.tecnicosInativos} inativo(s)` : undefined} />
           <Stat label="Novos (7d)" value={String(o.cadastros7d)} />
           <Stat label="Novos (30d)" value={String(o.cadastros30d)} />
+          {filtrado && <Stat label="Cadastrados no período" value={String(o.cadastrosNoPeriodo ?? 0)} />}
         </div>
         {o.tecnicosSemEnvio > 0 && (
           <p className="text-xs text-muted-foreground">
@@ -32,7 +39,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Orçamentos</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">Orçamentos {filtrado && "no período"}</h2>
         <div className="grid grid-cols-2 gap-2">
           <Stat label="Total" value={String(o.orcamentosTotal)} />
           <Stat label="Rascunhos" value={String(o.rascunhos)} />
@@ -45,7 +52,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Receita (aprovados)</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">Receita (aprovados {filtrado && "no período"})</h2>
         <div className="grid grid-cols-2 gap-2">
           <Stat label="Total aprovado" value={formatBRL(o.receitaAprovadaCents)} />
           <Stat label="Ticket médio" value={formatBRL(o.ticketMedioCents)} />

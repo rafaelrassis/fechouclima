@@ -1,7 +1,25 @@
-import type { QuoteStatus } from "@prisma/client";
+import type { Prisma, QuoteStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type DateRange = { from?: Date; to?: Date };
+
+// Sem from/to: undefined (sem filtro, "desde sempre"). Usado em Quote.createdAt e User.createdAt.
+function dateRangeWhere(range?: DateRange): Prisma.DateTimeFilter | undefined {
+  if (!range || (!range.from && !range.to)) return undefined;
+  return { ...(range.from ? { gte: range.from } : {}), ...(range.to ? { lte: range.to } : {}) };
+}
+
+// Datas de ?from=&to= (YYYY-MM-DD, do input type="date") para um DateRange: `to` inclui o dia inteiro.
+export function parseDateRangeParams(params: { from?: string; to?: string }): DateRange {
+  const from = params.from ? new Date(`${params.from}T00:00:00`) : undefined;
+  const to = params.to ? new Date(`${params.to}T23:59:59.999`) : undefined;
+  return {
+    from: from && !isNaN(from.getTime()) ? from : undefined,
+    to: to && !isNaN(to.getTime()) ? to : undefined,
+  };
+}
 
 export type AdminOverview = {
   tecnicosTotal: number;
@@ -9,6 +27,7 @@ export type AdminOverview = {
   tecnicosInativos: number;
   cadastros7d: number;
   cadastros30d: number;
+  cadastrosNoPeriodo: number | null;
   orcamentosTotal: number;
   rascunhos: number;
   enviados: number;
@@ -22,15 +41,20 @@ export type AdminOverview = {
 };
 
 // Visão geral para o dashboard admin: 1 ida ao banco por métrica, tudo em paralelo.
-export async function getAdminOverview(now = new Date()): Promise<AdminOverview> {
+// `range` filtra os orçamentos (e os cadastros em `cadastrosNoPeriodo`) por Quote/User.createdAt;
+// sem range, é "desde sempre" (comportamento anterior).
+export async function getAdminOverview(range?: DateRange, now = new Date()): Promise<AdminOverview> {
   const since7d = new Date(now.getTime() - 7 * DAY_MS);
   const since30d = new Date(now.getTime() - 30 * DAY_MS);
+  const createdAt = dateRangeWhere(range);
+  const quoteWhere: Prisma.QuoteWhereInput = createdAt ? { createdAt } : {};
 
   const [
     tecnicosTotal,
     tecnicosAtivos,
     cadastros7d,
     cadastros30d,
+    cadastrosNoPeriodo,
     porStatus,
     enviados,
     vistos,
@@ -41,10 +65,11 @@ export async function getAdminOverview(now = new Date()): Promise<AdminOverview>
     db.user.count({ where: { isActive: true } }),
     db.user.count({ where: { createdAt: { gte: since7d } } }),
     db.user.count({ where: { createdAt: { gte: since30d } } }),
-    db.quote.groupBy({ by: ["status"], _count: { _all: true } }),
-    db.quote.count({ where: { sentAt: { not: null } } }),
-    db.quote.count({ where: { sentAt: { not: null }, viewedAt: { not: null } } }),
-    db.quote.aggregate({ where: { status: "APPROVED" }, _sum: { totalCents: true }, _count: { _all: true } }),
+    createdAt ? db.user.count({ where: { createdAt } }) : Promise.resolve(null),
+    db.quote.groupBy({ by: ["status"], where: quoteWhere, _count: { _all: true } }),
+    db.quote.count({ where: { ...quoteWhere, sentAt: { not: null } } }),
+    db.quote.count({ where: { ...quoteWhere, sentAt: { not: null }, viewedAt: { not: null } } }),
+    db.quote.aggregate({ where: { ...quoteWhere, status: "APPROVED" }, _sum: { totalCents: true }, _count: { _all: true } }),
     db.user.count({ where: { quotes: { none: { sentAt: { not: null } } } } }),
   ]);
 
@@ -58,6 +83,7 @@ export async function getAdminOverview(now = new Date()): Promise<AdminOverview>
     tecnicosInativos: tecnicosTotal - tecnicosAtivos,
     cadastros7d,
     cadastros30d,
+    cadastrosNoPeriodo,
     orcamentosTotal: porStatus.reduce((acc, s) => acc + s._count._all, 0),
     rascunhos: byStatus("DRAFT"),
     enviados,
@@ -88,7 +114,14 @@ export type AdminUserRow = {
 };
 
 // Lista para /admin/usuarios, com busca por nome/e-mail/empresa. Contagens via groupBy (evita N+1).
-export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
+// `range` filtra os orçamentos contados (totalOrcamentos/enviados/aprovados/receita) por
+// Quote.createdAt; sem range, são os totais de sempre. `sort` rankeia por esses números
+// ("orcamentos" = mais orçamentos feitos, "aprovados" = mais fechados); sem sort, por cadastro.
+export async function listAdminUsers(
+  query?: string,
+  range?: DateRange,
+  sort?: "orcamentos" | "aprovados",
+): Promise<AdminUserRow[]> {
   const where = query
     ? {
         OR: [
@@ -98,6 +131,8 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
         ],
       }
     : {};
+  const createdAt = dateRangeWhere(range);
+  const quoteWhere: Prisma.QuoteWhereInput = createdAt ? { createdAt } : {};
 
   const [users, statusCounts, enviadosByUser, lastQuotes] = await Promise.all([
     db.user.findMany({
@@ -105,8 +140,8 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, email: true, phone: true, companyName: true, isActive: true, isAdmin: true, createdAt: true },
     }),
-    db.quote.groupBy({ by: ["userId", "status"], _count: { _all: true }, _sum: { totalCents: true } }),
-    db.quote.groupBy({ by: ["userId"], where: { sentAt: { not: null } }, _count: { _all: true } }),
+    db.quote.groupBy({ by: ["userId", "status"], where: quoteWhere, _count: { _all: true }, _sum: { totalCents: true } }),
+    db.quote.groupBy({ by: ["userId"], where: { ...quoteWhere, sentAt: { not: null } }, _count: { _all: true } }),
     db.quote.groupBy({ by: ["userId"], _max: { createdAt: true } }),
   ]);
 
@@ -123,7 +158,7 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
   const sentByUser = new Map(enviadosByUser.map((r) => [r.userId, r._count._all]));
   const lastByUser = new Map(lastQuotes.map((r) => [r.userId, r._max.createdAt]));
 
-  return users.map((u) => ({
+  const rows = users.map((u) => ({
     ...u,
     totalOrcamentos: totalByUser.get(u.id) ?? 0,
     enviados: sentByUser.get(u.id) ?? 0,
@@ -131,6 +166,10 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
     receitaAprovadaCents: revenueByUser.get(u.id) ?? 0,
     ultimoOrcamentoEm: lastByUser.get(u.id) ?? null,
   }));
+
+  if (sort === "orcamentos") return rows.sort((a, b) => b.totalOrcamentos - a.totalOrcamentos);
+  if (sort === "aprovados") return rows.sort((a, b) => b.aprovados - a.aprovados);
+  return rows;
 }
 
 export type AdminUserStats = {
