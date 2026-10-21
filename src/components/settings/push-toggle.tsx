@@ -14,7 +14,15 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-type State = "loading" | "unsupported" | "denied" | "off" | "on";
+type State = "loading" | "unsupported" | "install-pwa" | "denied" | "off" | "on";
+
+function isIos(): boolean {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isStandalone(): boolean {
+  return window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+}
 
 export function PushToggle() {
   const [state, setState] = useState<State>("loading");
@@ -23,7 +31,7 @@ export function PushToggle() {
   useEffect(() => {
     (async () => {
       if (!VAPID || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-        setState("unsupported");
+        setState(isIos() && !isStandalone() ? "install-pwa" : "unsupported");
         return;
       }
       if (Notification.permission === "denied") {
@@ -86,7 +94,8 @@ export function PushToggle() {
 
   const hint: Record<State, string> = {
     loading: "Verificando...",
-    unsupported: "Este navegador não permite avisos. No iPhone, instale o app na tela de início primeiro.",
+    unsupported: "Este navegador não permite avisos.",
+    "install-pwa": 'No iPhone, toque em "Compartilhar" e depois em "Adicionar à Tela de Início" para ativar os avisos.',
     denied: "Você bloqueou as notificações. Libere nas configurações do navegador para ativar.",
     off: "Receba no celular quando um cliente aprovar ou recusar.",
     on: "Ativado neste aparelho.",
