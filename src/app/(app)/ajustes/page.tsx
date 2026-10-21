@@ -12,6 +12,7 @@ import { LogoForm } from "@/components/settings/logo-form";
 import { EmailDigestToggle } from "@/components/settings/email-digest-toggle";
 import { DefaultReminderForm } from "@/components/settings/default-reminder-form";
 import { ReferralCard } from "@/components/settings/referral-card";
+import { SupportButton } from "@/components/settings/support-button";
 import { WaTemplateForm } from "@/components/settings/wa-template-form";
 import { NudgeTemplateForm } from "@/components/settings/nudge-template-form";
 import { ApprovalWaTemplateForm } from "@/components/settings/approval-wa-template-form";
@@ -61,6 +62,7 @@ export default async function AjustesPage() {
       />
       <DefaultReminderForm initial={user.defaultReminderMonths} />
       {referralCode.ok && <ReferralCard link={`${baseUrl}/cadastro?ref=${referralCode.data.code}`} count={referralCount} />}
+      <SupportButton />
       <AccountSection />
       <LegalLinks />
     </div>
