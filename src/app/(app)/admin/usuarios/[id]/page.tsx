@@ -4,6 +4,7 @@ import { getAdminUserDetail } from "@/lib/admin-queries";
 import { formatBRL } from "@/lib/money";
 import { StatusBadge } from "@/components/quotes/status-badge";
 import { ToggleActiveButton } from "@/components/admin/toggle-active-button";
+import { DeleteAccountButton } from "@/components/admin/delete-account-button";
 import { Stat } from "@/components/admin/stat";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -29,7 +30,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </p>
       </div>
 
-      {!user.isAdmin && <ToggleActiveButton userId={user.id} isActive={user.isActive} />}
+      {!user.isAdmin && (
+        <div className="space-y-2">
+          <ToggleActiveButton userId={user.id} isActive={user.isActive} />
+          <DeleteAccountButton userId={user.id} userName={user.name} />
+        </div>
+      )}
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Orçamentos</h2>

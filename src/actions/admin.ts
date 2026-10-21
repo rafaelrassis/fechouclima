@@ -32,3 +32,23 @@ export async function setUserActive(userId: string, isActive: boolean): Promise<
   revalidatePath(`/admin/usuarios/${userId}`);
   return { ok: true, data: undefined };
 }
+
+// Apaga a conta do técnico e tudo que pertence a ele (orçamentos, clientes, serviços
+// próprios, etc.) via cascade no banco. Irreversível.
+export async function deleteUserAccount(userId: string): Promise<ActionResult> {
+  const adminId = await requireAdmin();
+  if (userId === adminId) {
+    return { ok: false, error: "Você não pode excluir sua própria conta por aqui." };
+  }
+
+  const target = await db.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  if (!target) return { ok: false, error: "Técnico não encontrado." };
+  if (target.isAdmin) {
+    return { ok: false, error: "Não é possível excluir outra conta admin." };
+  }
+
+  await db.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/usuarios");
+  return { ok: true, data: undefined };
+}
