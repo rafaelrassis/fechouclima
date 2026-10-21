@@ -14,7 +14,7 @@ const ITEMS = [
   { href: "/ajustes", label: "Ajustes", Icon: Settings },
 ] as const;
 
-export function SidebarNav({ userName }: { userName: string }) {
+export function SidebarNav({ userName, isAdmin }: { userName: string; isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -52,7 +52,14 @@ export function SidebarNav({ userName }: { userName: string }) {
         </span>
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-bold">{userName}</span>
-          <LogoutButton className="h-auto min-h-0 p-0 text-xs font-medium text-white/70 hover:bg-transparent hover:text-white" />
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link href="/admin" className="text-xs font-semibold text-white/70 hover:text-white">
+                Admin
+              </Link>
+            )}
+            <LogoutButton className="h-auto min-h-0 p-0 text-xs font-medium text-white/70 hover:bg-transparent hover:text-white" />
+          </div>
         </div>
       </div>
     </aside>

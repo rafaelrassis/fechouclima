@@ -4,6 +4,7 @@ import { getAdminUserDetail } from "@/lib/admin-queries";
 import { formatBRL } from "@/lib/money";
 import { StatusBadge } from "@/components/quotes/status-badge";
 import { ToggleActiveButton } from "@/components/admin/toggle-active-button";
+import { Stat } from "@/components/admin/stat";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Técnico" };
@@ -29,6 +30,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       </div>
 
       {!user.isAdmin && <ToggleActiveButton userId={user.id} isActive={user.isActive} />}
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground">Orçamentos</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <Stat label="Total" value={String(user.stats.total)} />
+          <Stat label="Rascunhos" value={String(user.stats.rascunhos)} />
+          <Stat label="Enviados" value={String(user.stats.enviados)} />
+          <Stat label="Vistos" value={String(user.stats.vistos)} />
+          <Stat label="Aprovados" value={String(user.stats.aprovados)} />
+          <Stat label="Recusados" value={String(user.stats.recusados)} />
+          <Stat label="Expirados" value={String(user.stats.expirados)} />
+          <Stat label="Receita aprovada" value={formatBRL(user.stats.receitaAprovadaCents)} />
+        </div>
+      </section>
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Últimos orçamentos</h2>

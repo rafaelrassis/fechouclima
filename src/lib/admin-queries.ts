@@ -80,7 +80,9 @@ export type AdminUserRow = {
   isAdmin: boolean;
   createdAt: Date;
   totalOrcamentos: number;
+  enviados: number;
   aprovados: number;
+  receitaAprovadaCents: number;
   ultimoOrcamentoEm: Date | null;
 };
 
@@ -96,31 +98,50 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
       }
     : {};
 
-  const [users, statusCounts, lastQuotes] = await Promise.all([
+  const [users, statusCounts, enviadosByUser, lastQuotes] = await Promise.all([
     db.user.findMany({
       where,
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, email: true, companyName: true, isActive: true, isAdmin: true, createdAt: true },
     }),
-    db.quote.groupBy({ by: ["userId", "status"], _count: { _all: true } }),
+    db.quote.groupBy({ by: ["userId", "status"], _count: { _all: true }, _sum: { totalCents: true } }),
+    db.quote.groupBy({ by: ["userId"], where: { sentAt: { not: null } }, _count: { _all: true } }),
     db.quote.groupBy({ by: ["userId"], _max: { createdAt: true } }),
   ]);
 
   const totalByUser = new Map<string, number>();
   const approvedByUser = new Map<string, number>();
+  const revenueByUser = new Map<string, number>();
   for (const row of statusCounts) {
     totalByUser.set(row.userId, (totalByUser.get(row.userId) ?? 0) + row._count._all);
-    if (row.status === "APPROVED") approvedByUser.set(row.userId, row._count._all);
+    if (row.status === "APPROVED") {
+      approvedByUser.set(row.userId, row._count._all);
+      revenueByUser.set(row.userId, row._sum.totalCents ?? 0);
+    }
   }
+  const sentByUser = new Map(enviadosByUser.map((r) => [r.userId, r._count._all]));
   const lastByUser = new Map(lastQuotes.map((r) => [r.userId, r._max.createdAt]));
 
   return users.map((u) => ({
     ...u,
     totalOrcamentos: totalByUser.get(u.id) ?? 0,
+    enviados: sentByUser.get(u.id) ?? 0,
     aprovados: approvedByUser.get(u.id) ?? 0,
+    receitaAprovadaCents: revenueByUser.get(u.id) ?? 0,
     ultimoOrcamentoEm: lastByUser.get(u.id) ?? null,
   }));
 }
+
+export type AdminUserStats = {
+  total: number;
+  rascunhos: number;
+  enviados: number;
+  vistos: number;
+  aprovados: number;
+  recusados: number;
+  expirados: number;
+  receitaAprovadaCents: number;
+};
 
 export type AdminUserDetail = {
   id: string;
@@ -132,28 +153,51 @@ export type AdminUserDetail = {
   isAdmin: boolean;
   deactivatedAt: Date | null;
   createdAt: Date;
+  stats: AdminUserStats;
   quotes: { id: string; number: number; customerName: string; status: QuoteStatus; totalCents: number; createdAt: Date }[];
 };
 
 export async function getAdminUserDetail(userId: string): Promise<AdminUserDetail | null> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      companyName: true,
-      isActive: true,
-      isAdmin: true,
-      deactivatedAt: true,
-      createdAt: true,
-      quotes: {
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        select: { id: true, number: true, customerName: true, status: true, totalCents: true, createdAt: true },
+  const [user, porStatus, enviados, vistos, receitaAprovada] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        companyName: true,
+        isActive: true,
+        isAdmin: true,
+        deactivatedAt: true,
+        createdAt: true,
+        quotes: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: { id: true, number: true, customerName: true, status: true, totalCents: true, createdAt: true },
+        },
       },
+    }),
+    db.quote.groupBy({ by: ["status"], where: { userId }, _count: { _all: true } }),
+    db.quote.count({ where: { userId, sentAt: { not: null } } }),
+    db.quote.count({ where: { userId, sentAt: { not: null }, viewedAt: { not: null } } }),
+    db.quote.aggregate({ where: { userId, status: "APPROVED" }, _sum: { totalCents: true } }),
+  ]);
+  if (!user) return null;
+
+  const byStatus = (status: QuoteStatus) => porStatus.find((s) => s.status === status)?._count._all ?? 0;
+
+  return {
+    ...user,
+    stats: {
+      total: porStatus.reduce((acc, s) => acc + s._count._all, 0),
+      rascunhos: byStatus("DRAFT"),
+      enviados,
+      vistos,
+      aprovados: byStatus("APPROVED"),
+      recusados: byStatus("REJECTED"),
+      expirados: byStatus("EXPIRED"),
+      receitaAprovadaCents: receitaAprovada._sum.totalCents ?? 0,
     },
-  });
-  return user;
+  };
 }

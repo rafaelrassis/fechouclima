@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { listAdminUsers } from "@/lib/admin-queries";
+import { formatBRL } from "@/lib/money";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,8 +43,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 </p>
                 <p className="truncate text-xs text-muted-foreground">{u.companyName ?? u.email}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {u.totalOrcamentos} orçamento(s) · {u.aprovados} aprovado(s)
+                  {u.totalOrcamentos} total · {u.enviados} enviado(s) · {u.aprovados} aprovado(s)
                 </p>
+                {u.aprovados > 0 && <p className="text-xs font-semibold text-success">{formatBRL(u.receitaAprovadaCents)}</p>}
               </div>
               <span
                 className={
