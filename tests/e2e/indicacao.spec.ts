@@ -20,6 +20,7 @@ test("técnico indica um colega: copia o link, o colega se cadastra por ele e o 
   await pageB.goto(link!);
   await pageB.getByLabel("Nome").fill("Colega Indicado");
   await pageB.getByLabel("E-mail").fill(`colega-${Date.now()}@fechouclima.com.br`);
+  await pageB.getByLabel("WhatsApp").fill("11999990000");
   await pageB.getByLabel("Senha").fill("senha123");
   await pageB.getByRole("checkbox", { name: /Li e aceito/ }).check();
   await pageB.getByRole("button", { name: "Criar conta" }).click();

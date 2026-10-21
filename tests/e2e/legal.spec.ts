@@ -29,6 +29,7 @@ test("cadastro exige o aceite dos termos", async ({ page }) => {
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Nome").fill("Sem Aceite");
   await page.getByLabel("E-mail").fill(`sem-aceite-${Date.now()}@fechouclima.com.br`);
+  await page.getByLabel("WhatsApp").fill("11999990000");
   await page.getByLabel("Senha").fill("senha123");
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page).toHaveURL(/\/cadastro$/); // o navegador bloqueia o envio

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { registerAction } from "@/actions/auth";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { maskPhone } from "@/lib/utils";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -21,6 +22,7 @@ function SubmitButton() {
 export function CadastroForm({ refCode }: { refCode: string }) {
   const [state, action] = useActionState(registerAction, undefined);
   const fe = state?.fieldErrors;
+  const [phone, setPhone] = useState(state?.values?.phone ? maskPhone(state.values.phone) : "");
 
   return (
     <AuthShell title="Criar conta" subtitle="Orçamentos em menos de 60 segundos">
@@ -35,6 +37,22 @@ export function CadastroForm({ refCode }: { refCode: string }) {
           <Label htmlFor="email">E-mail</Label>
           <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" required defaultValue={state?.values?.email} key={`e-${state?.values?.email}`} className="h-12 text-base" />
           {fe?.email && <p className="text-sm text-destructive">{fe.email[0]}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">WhatsApp</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(11) 99999-9999"
+            required
+            value={phone}
+            onChange={(e) => setPhone(maskPhone(e.target.value))}
+            className="h-12 text-base"
+          />
+          {fe?.phone && <p className="text-sm text-destructive">{fe.phone[0]}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>

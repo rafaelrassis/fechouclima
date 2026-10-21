@@ -75,6 +75,7 @@ export type AdminUserRow = {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   companyName: string | null;
   isActive: boolean;
   isAdmin: boolean;
@@ -102,7 +103,7 @@ export async function listAdminUsers(query?: string): Promise<AdminUserRow[]> {
     db.user.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, email: true, companyName: true, isActive: true, isAdmin: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, companyName: true, isActive: true, isAdmin: true, createdAt: true },
     }),
     db.quote.groupBy({ by: ["userId", "status"], _count: { _all: true }, _sum: { totalCents: true } }),
     db.quote.groupBy({ by: ["userId"], where: { sentAt: { not: null } }, _count: { _all: true } }),

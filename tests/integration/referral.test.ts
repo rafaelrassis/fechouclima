@@ -54,7 +54,7 @@ describe("cadastro com indicação", () => {
     const { data } = (await ensureReferralCode()) as { ok: true; data: { code: string } };
     loginAs(""); // cadastro é público
 
-    await registerAction(undefined, form({ name: "Maria", email: "maria@t.com", password: "senha123", accept: "on", ref: data.code }));
+    await registerAction(undefined, form({ name: "Maria", email: "maria@t.com", password: "senha123", phone: "11999990000", accept: "on", ref: data.code }));
     const novo = await db.user.findUniqueOrThrow({ where: { email: "maria@t.com" } });
     expect(novo.referredById).toBe(dono.id);
   });
@@ -65,21 +65,21 @@ describe("cadastro com indicação", () => {
     const { data } = (await ensureReferralCode()) as { ok: true; data: { code: string } };
     loginAs("");
 
-    await registerAction(undefined, form({ name: "Maria", email: "maria2@t.com", password: "senha123", accept: "on", ref: data.code.toLowerCase() }));
+    await registerAction(undefined, form({ name: "Maria", email: "maria2@t.com", password: "senha123", phone: "11999990000", accept: "on", ref: data.code.toLowerCase() }));
     const novo = await db.user.findUniqueOrThrow({ where: { email: "maria2@t.com" } });
     expect(novo.referredById).toBe(dono.id);
   });
 
   it("ref malformado ou de código inexistente cadastra normalmente, sem vínculo e sem erro", async () => {
-    await registerAction(undefined, form({ name: "Sem Ref", email: "semref@t.com", password: "senha123", accept: "on", ref: "x".repeat(6) }));
+    await registerAction(undefined, form({ name: "Sem Ref", email: "semref@t.com", password: "senha123", phone: "11999990000", accept: "on", ref: "x".repeat(6) }));
     const a = await db.user.findUniqueOrThrow({ where: { email: "semref@t.com" } });
     expect(a.referredById).toBeNull();
 
-    await registerAction(undefined, form({ name: "Ref Curto", email: "refcurto@t.com", password: "senha123", accept: "on", ref: "AB" }));
+    await registerAction(undefined, form({ name: "Ref Curto", email: "refcurto@t.com", password: "senha123", phone: "11999990000", accept: "on", ref: "AB" }));
     const b = await db.user.findUniqueOrThrow({ where: { email: "refcurto@t.com" } });
     expect(b.referredById).toBeNull();
 
-    await registerAction(undefined, form({ name: "Sem Campo", email: "semcampo@t.com", password: "senha123", accept: "on" }));
+    await registerAction(undefined, form({ name: "Sem Campo", email: "semcampo@t.com", password: "senha123", phone: "11999990000", accept: "on" }));
     const c = await db.user.findUniqueOrThrow({ where: { email: "semcampo@t.com" } });
     expect(c.referredById).toBeNull();
   });
@@ -89,7 +89,7 @@ describe("cadastro com indicação", () => {
     loginAs(dono.id);
     const { data } = (await ensureReferralCode()) as { ok: true; data: { code: string } };
     loginAs("");
-    await registerAction(undefined, form({ name: "Maria", email: "maria@t.com", password: "senha123", accept: "on", ref: data.code }));
+    await registerAction(undefined, form({ name: "Maria", email: "maria@t.com", password: "senha123", phone: "11999990000", accept: "on", ref: data.code }));
     const novo = await db.user.findUniqueOrThrow({ where: { email: "maria@t.com" } });
 
     await db.user.delete({ where: { id: dono.id } }); // SetNull: só testa a cascata, não o fluxo de deleteAccount

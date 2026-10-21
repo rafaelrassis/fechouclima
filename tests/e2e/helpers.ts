@@ -10,6 +10,7 @@ export async function registerTechnician(page: Page, label: string) {
   await page.goto("/cadastro");
   await page.getByLabel("Nome").fill(`Técnico ${label}`);
   await page.getByLabel("E-mail").fill(`${label}-${n}-${Date.now()}@fechouclima.com.br`.toLowerCase());
+  await page.getByLabel("WhatsApp").fill("11999990000");
   await page.getByLabel("Senha").fill("senha123");
   await page.getByRole("checkbox", { name: /Li e aceito/ }).check();
   await page.getByRole("button", { name: "Criar conta" }).click();

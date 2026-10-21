@@ -39,10 +39,10 @@ async function userWithData(email: string, password = "minhasenha") {
 
 describe("cadastro com consentimento", () => {
   it("exige aceite dos termos e grava a data do aceite", async () => {
-    const base = { name: "Maria", email: "maria@t.com", password: "senha123" };
+    const base = { name: "Maria", email: "maria@t.com", password: "senha123", phone: "11999990000" };
     const refused = await registerAction(undefined, form(base));
     expect(refused?.fieldErrors?.accept?.[0]).toMatch(/Aceite os Termos/);
-    expect(refused?.values).toEqual({ name: "Maria", email: "maria@t.com" }); // não perde o que digitou
+    expect(refused?.values).toEqual({ name: "Maria", email: "maria@t.com", phone: "11999990000" }); // não perde o que digitou
     expect(await db.user.count()).toBe(0);
 
     await registerAction(undefined, form({ ...base, accept: "on" }));
@@ -52,20 +52,20 @@ describe("cadastro com consentimento", () => {
   });
 
   it("e-mail duplicado (qualquer caixa) devolve erro de campo e mantém os valores", async () => {
-    await registerAction(undefined, form({ name: "Ana", email: "dup@t.com", password: "senha123", accept: "on" }));
-    const again = await registerAction(undefined, form({ name: "Outra Pessoa", email: "DUP@t.com", password: "senha123", accept: "on" }));
+    await registerAction(undefined, form({ name: "Ana", email: "dup@t.com", password: "senha123", phone: "11999990000", accept: "on" }));
+    const again = await registerAction(undefined, form({ name: "Outra Pessoa", email: "DUP@t.com", password: "senha123", phone: "11999990000", accept: "on" }));
     expect(again?.fieldErrors?.email?.[0]).toBe("E-mail já cadastrado");
     expect(again?.values?.name).toBe("Outra Pessoa");
     expect(await db.user.count()).toBe(1);
   });
 
   it("valida nome curto, e-mail inválido e senha curta; rate limit por IP (15/hora)", async () => {
-    const bad = await registerAction(undefined, form({ name: "A", email: "x", password: "123", accept: "on" }));
+    const bad = await registerAction(undefined, form({ name: "A", email: "x", password: "123", phone: "11999990000", accept: "on" }));
     expect(Object.keys(bad?.fieldErrors ?? {}).sort()).toEqual(["email", "name", "password"]);
 
     let blocked = 0;
     for (let i = 0; i < 17; i++) {
-      const r = await registerAction(undefined, form({ name: "Pessoa", email: `p${i}@t.com`, password: "senha123", accept: "on" }));
+      const r = await registerAction(undefined, form({ name: "Pessoa", email: `p${i}@t.com`, password: "senha123", phone: "11999990000", accept: "on" }));
       if (r?.error?.startsWith("Muitas tentativas")) blocked++;
     }
     expect(blocked).toBeGreaterThanOrEqual(2); // 1 tentativa inválida + 14 válidas gastam o limite de 15
