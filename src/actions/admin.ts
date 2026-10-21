@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import type { ActionResult } from "@/types/action";
@@ -34,11 +35,16 @@ export async function setUserActive(userId: string, isActive: boolean): Promise<
 }
 
 // Apaga a conta do técnico e tudo que pertence a ele (orçamentos, clientes, serviços
-// próprios, etc.) via cascade no banco. Irreversível.
-export async function deleteUserAccount(userId: string): Promise<ActionResult> {
+// próprios, etc.) via cascade no banco. Irreversível: exige a senha do admin logado.
+export async function deleteUserAccount(userId: string, adminPassword: string): Promise<ActionResult> {
   const adminId = await requireAdmin();
   if (userId === adminId) {
     return { ok: false, error: "Você não pode excluir sua própria conta por aqui." };
+  }
+
+  const admin = await db.user.findUnique({ where: { id: adminId }, select: { passwordHash: true } });
+  if (!admin || !(await bcrypt.compare(adminPassword, admin.passwordHash))) {
+    return { ok: false, error: "Senha incorreta." };
   }
 
   const target = await db.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
