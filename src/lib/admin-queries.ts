@@ -97,6 +97,20 @@ export async function getAdminOverview(range?: DateRange, now = new Date()): Pro
   };
 }
 
+export type VisitsBySource = { src: string | null; aberturas: number };
+
+// Aberturas do link público (QuoteVisit) por origem (?src=), da maior para a menor. `range` filtra por abertura.
+export async function getVisitsBySource(range?: DateRange): Promise<VisitsBySource[]> {
+  const createdAt = dateRangeWhere(range);
+  const rows = await db.quoteVisit.groupBy({
+    by: ["src"],
+    where: createdAt ? { createdAt } : {},
+    _count: { _all: true },
+    orderBy: { _count: { src: "desc" } },
+  });
+  return rows.map((r) => ({ src: r.src, aberturas: r._count._all }));
+}
+
 export type AdminUserRow = {
   id: string;
   name: string;

@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/session";
-import { getAdminOverview, parseDateRangeParams } from "@/lib/admin-queries";
+import { getAdminOverview, getVisitsBySource, parseDateRangeParams } from "@/lib/admin-queries";
 import { formatBRL } from "@/lib/money";
 import { Stat } from "@/components/admin/stat";
 import { DateRangeFilter } from "@/components/admin/date-range-filter";
@@ -10,7 +10,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   await requireAdmin();
   const { from, to } = await searchParams;
   const range = parseDateRangeParams({ from, to });
-  const o = await getAdminOverview(range);
+  const [o, visitas] = await Promise.all([getAdminOverview(range), getVisitsBySource(range)]);
 
   const vistosPct = o.enviados > 0 ? Math.round((o.vistos / o.enviados) * 100) : 0;
   const aprovadosPct = o.enviados > 0 ? Math.round((o.aprovados / o.enviados) * 100) : 0;
@@ -49,6 +49,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <Stat label="Recusados" value={String(o.recusados)} />
           <Stat label="Expirados" value={String(o.expirados)} />
         </div>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground">Aberturas do link {filtrado && "no período"}</h2>
+        {visitas.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Nenhuma abertura registrada ainda.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {visitas.map((v) => (
+              <Stat key={v.src ?? "sem-origem"} label={v.src ?? "sem origem"} value={String(v.aberturas)} />
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">Use ?src=maps no fim do link para medir o canal. Não conta suas próprias aberturas.</p>
       </section>
 
       <section className="space-y-2">
