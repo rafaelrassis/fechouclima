@@ -125,6 +125,7 @@ model Quote {
   items    QuoteItem[]
   photos   QuotePhoto[]
   nudges   QuoteNudge[]
+  visits   QuoteVisit[]
 
   @@unique([userId, number])
   @@index([userId, status, createdAt])
@@ -219,6 +220,20 @@ model QuotePhoto {
 
 // Histórico de cobranças (NUDGE) e adiamentos (SNOOZE) do técnico; alimenta o funil dos últimos 30 dias.
 // Quote.lastNudgeAt continua sendo o que esconde o orçamento das listas.
+// Toda abertura do link público por terceiros (não o dono), com origem opcional (?src=maps).
+// viewedAt guarda só a 1ª; esta tabela serve para medir canais/demo.
+model QuoteVisit {
+  id        String   @id @default(cuid())
+  quoteId   String
+  src       String?
+  createdAt DateTime @default(now())
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId, createdAt])
+  @@index([src, createdAt])
+}
+
 model QuoteNudge {
   id        String    @id @default(cuid())
   quoteId   String

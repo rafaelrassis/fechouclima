@@ -294,13 +294,22 @@ export async function approveQuoteByPublicId(publicId: string): Promise<ActionRe
 }
 
 // Pública (sem auth): beacon da página marca a 1ª abertura do link pelo cliente
-export async function markQuoteViewed(publicId: string): Promise<ActionResult> {
+export async function markQuoteViewed(publicId: string, src?: string): Promise<ActionResult> {
   const rl = await rateLimit(`public:${await getClientIp()}`, LIMITS.publicAction.limit, LIMITS.publicAction.windowSec);
   if (!rl.ok) return { ok: false, error: "Muitas tentativas. Tente novamente em alguns minutos." };
   if (!/^[0-9a-f-]{36}$/i.test(publicId)) return { ok: false, error: "Link inválido" };
 
   // técnico testando o próprio link não conta como "cliente abriu"
   const ownerId = await getUserId();
+
+  // toda abertura de terceiros (não rascunho) entra em QuoteVisit; origem só se for um slug curto
+  const cleanSrc = src && /^[a-z0-9_-]{1,24}$/i.test(src) ? src.toLowerCase() : null;
+  const target = await db.quote.findFirst({
+    where: { publicId, status: { not: "DRAFT" }, ...(ownerId ? { userId: { not: ownerId } } : {}) },
+    select: { id: true },
+  });
+  if (target) await db.quoteVisit.create({ data: { quoteId: target.id, src: cleanSrc } });
+
   const { count } = await db.quote.updateMany({
     where: { publicId, status: "SENT", viewedAt: null, ...(ownerId ? { userId: { not: ownerId } } : {}) },
     data: { viewedAt: new Date() },
