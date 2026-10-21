@@ -15,7 +15,7 @@ import { forgotPasswordSchema, referralCodeSchema, registerSchema, resetPassword
 export type RegisterState = {
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  values?: { name: string; email: string; phone: string };
+  values?: { name: string; email: string; phone: string; companyName: string };
 };
 
 export type LoginState = { error?: string; email?: string };
@@ -63,6 +63,7 @@ export async function registerAction(
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     phone: String(formData.get("phone") ?? ""),
+    companyName: String(formData.get("companyName") ?? ""),
   };
   const reg = await rateLimit(`register:${await getClientIp()}`, LIMITS.register.limit, LIMITS.register.windowSec);
   if (!reg.ok) return { error: "Muitas tentativas. Tente novamente mais tarde.", values };
@@ -72,12 +73,13 @@ export async function registerAction(
     email: formData.get("email"),
     password: formData.get("password"),
     phone: formData.get("phone"),
+    companyName: formData.get("companyName"),
     accept: formData.get("accept"),
   });
   if (!parsed.success) {
     return { error: "Dados inválidos", fieldErrors: parsed.error.flatten().fieldErrors, values };
   }
-  const { name, email, password, phone } = parsed.data;
+  const { name, email, password, phone, companyName } = parsed.data;
 
   // código inexistente/inválido é ignorado em silêncio: não bloqueia o cadastro, não revela se existe
   const refParsed = referralCodeSchema.safeParse(formData.get("ref"));
@@ -91,6 +93,7 @@ export async function registerAction(
         name,
         email,
         phone,
+        companyName: companyName || null,
         passwordHash: await bcrypt.hash(password, 10),
         termsAcceptedAt: new Date(),
         referredById: referredBy?.id,

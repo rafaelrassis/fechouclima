@@ -55,6 +55,19 @@ export function CadastroForm({ refCode }: { refCode: string }) {
           {fe?.phone && <p className="text-sm text-destructive">{fe.phone[0]}</p>}
         </div>
         <div className="space-y-2">
+          <Label htmlFor="companyName">Nome da empresa (opcional)</Label>
+          <Input
+            id="companyName"
+            name="companyName"
+            autoComplete="organization"
+            maxLength={120}
+            defaultValue={state?.values?.companyName}
+            key={`c-${state?.values?.companyName}`}
+            className="h-12 text-base"
+          />
+          {fe?.companyName && <p className="text-sm text-destructive">{fe.companyName[0]}</p>}
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
           <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={6} className="h-12 text-base" />
           {fe?.password && <p className="text-sm text-destructive">{fe.password[0]}</p>}

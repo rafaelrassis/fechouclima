@@ -8,6 +8,7 @@ export const registerSchema = z.object({
     .string()
     .transform((v) => v.replace(/\D/g, ""))
     .refine((v) => v.length >= 10 && v.length <= 11, "WhatsApp inválido"),
+  companyName: z.string().trim().max(120, "Máximo de 120 caracteres").nullish(),
   // checkbox HTML: "on" quando marcado, ausente (null) quando não
   accept: z.literal("on", { error: "Aceite os Termos e a Política de Privacidade" }),
 });

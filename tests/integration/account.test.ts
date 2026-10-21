@@ -42,7 +42,7 @@ describe("cadastro com consentimento", () => {
     const base = { name: "Maria", email: "maria@t.com", password: "senha123", phone: "11999990000" };
     const refused = await registerAction(undefined, form(base));
     expect(refused?.fieldErrors?.accept?.[0]).toMatch(/Aceite os Termos/);
-    expect(refused?.values).toEqual({ name: "Maria", email: "maria@t.com", phone: "11999990000" }); // não perde o que digitou
+    expect(refused?.values).toEqual({ name: "Maria", email: "maria@t.com", phone: "11999990000", companyName: "" }); // não perde o que digitou
     expect(await db.user.count()).toBe(0);
 
     await registerAction(undefined, form({ ...base, accept: "on" }));
