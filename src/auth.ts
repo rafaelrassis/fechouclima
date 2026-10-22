@@ -34,8 +34,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!valid) return null;
         if (!user.isActive) return null;
 
-        await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
-
         return { id: user.id, name: user.name, email: user.email };
       },
     }),

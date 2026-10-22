@@ -3,13 +3,22 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isSessionRevoked } from "@/lib/session-revoked";
 
+const LAST_LOGIN_THROTTLE_MS = 60 * 60 * 1000;
+
 export async function getUserId(): Promise<string | null> {
   const session = await auth();
   const id = session?.user?.id;
   if (!id) return null;
 
-  const user = await db.user.findUnique({ where: { id }, select: { sessionsValidAfter: true } });
+  const user = await db.user.findUnique({ where: { id }, select: { sessionsValidAfter: true, lastLoginAt: true } });
   if (!user || isSessionRevoked(session.issuedAt, user.sessionsValidAfter)) return null;
+
+  // "Último acesso" no admin: na prática é atividade, não só login, para não depender do técnico
+  // relogar; throttle de 1h para não gravar em toda requisição autenticada.
+  if (!user.lastLoginAt || Date.now() - user.lastLoginAt.getTime() > LAST_LOGIN_THROTTLE_MS) {
+    await db.user.update({ where: { id }, data: { lastLoginAt: new Date() } }).catch(() => {});
+  }
+
   return id;
 }
 
