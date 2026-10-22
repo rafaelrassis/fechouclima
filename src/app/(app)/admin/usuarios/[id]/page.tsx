@@ -28,6 +28,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           {user.isAdmin && " · conta admin"}
           {!user.isActive && user.deactivatedAt && ` · inativado em ${user.deactivatedAt.toLocaleDateString("pt-BR")}`}
         </p>
+        <p className="text-xs text-muted-foreground">
+          {user.lastLoginAt
+            ? `Último acesso em ${user.lastLoginAt.toLocaleDateString("pt-BR")} às ${user.lastLoginAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+            : "Nunca acessou"}
+        </p>
       </div>
 
       {!user.isAdmin && (

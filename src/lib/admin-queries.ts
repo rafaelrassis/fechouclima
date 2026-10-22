@@ -120,6 +120,7 @@ export type AdminUserRow = {
   isActive: boolean;
   isAdmin: boolean;
   createdAt: Date;
+  lastLoginAt: Date | null;
   totalOrcamentos: number;
   enviados: number;
   aprovados: number;
@@ -152,7 +153,17 @@ export async function listAdminUsers(
     db.user.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, email: true, phone: true, companyName: true, isActive: true, isAdmin: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        companyName: true,
+        isActive: true,
+        isAdmin: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
     }),
     db.quote.groupBy({ by: ["userId", "status"], where: quoteWhere, _count: { _all: true }, _sum: { totalCents: true } }),
     db.quote.groupBy({ by: ["userId"], where: { ...quoteWhere, sentAt: { not: null } }, _count: { _all: true } }),
@@ -207,6 +218,7 @@ export type AdminUserDetail = {
   isAdmin: boolean;
   deactivatedAt: Date | null;
   createdAt: Date;
+  lastLoginAt: Date | null;
   stats: AdminUserStats;
   quotes: { id: string; number: number; customerName: string; status: QuoteStatus; totalCents: number; createdAt: Date }[];
 };
@@ -225,6 +237,7 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
         isAdmin: true,
         deactivatedAt: true,
         createdAt: true,
+        lastLoginAt: true,
         quotes: {
           orderBy: { createdAt: "desc" },
           take: 20,
