@@ -100,6 +100,9 @@ export default async function AdminUsersPage({
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {u.totalOrcamentos} {filtrado ? "no período" : "total"} · {u.enviados} enviado(s) · {u.aprovados} aprovado(s)
               </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {u.lastLoginAt ? `Último acesso há ${diasDesde(u.lastLoginAt)}d` : "Nunca acessou"}
+              </p>
               {u.aprovados > 0 && <p className="text-xs font-semibold text-success">{formatBRL(u.receitaAprovadaCents)}</p>}
             </Link>
             <div className="flex shrink-0 flex-col items-end gap-1.5">
