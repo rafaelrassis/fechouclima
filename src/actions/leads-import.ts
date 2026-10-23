@@ -14,6 +14,7 @@ export type ImportSummary = {
   jaExistiam: number;
   fixos: number;
   invalidos: number;
+  cotaEsgotada?: boolean;
 };
 
 async function salvar(leads: ParsedLead[], origem: string): Promise<{ novos: number; jaExistiam: number }> {
@@ -53,9 +54,12 @@ export async function buscarLeadsNoMapa(input: z.input<typeof buscaSchema>): Pro
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Confira os campos." };
 
   try {
-    const { leads, fixos, semTelefone } = await buscarNegociosNoMapa(parsed.data.cidade, parsed.data.termo);
+    const { leads, fixos, semTelefone, cotaEsgotada } = await buscarNegociosNoMapa(parsed.data.cidade, parsed.data.termo);
+    if (cotaEsgotada && leads.length === 0) {
+      return { ok: false, error: "Cota gratuita do mês esgotada. Use \"Colar lista\" ou espere o mês virar." };
+    }
     const { novos, jaExistiam } = await salvar(leads, "gmaps");
-    return { ok: true, data: { novos, jaExistiam, fixos, invalidos: semTelefone } };
+    return { ok: true, data: { novos, jaExistiam, fixos, invalidos: semTelefone, cotaEsgotada } };
   } catch (e) {
     if (e instanceof PlacesConfigError) return { ok: false, error: e.message };
     return { ok: false, error: "Não consegui buscar no Google agora. Tente de novo em instantes." };

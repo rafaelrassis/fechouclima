@@ -1,4 +1,5 @@
 import { isCelularBr } from "@/lib/lead-import";
+import { consumirCotaPlaces } from "@/lib/places-quota";
 import { normalizeBrPhone } from "@/lib/whatsapp";
 import type { ParsedLead } from "@/lib/lead-import";
 
@@ -23,7 +24,13 @@ export async function buscarNegociosNoMapa(cidade: string, termo: string) {
   let semTelefone = 0;
   let pageToken: string | undefined;
 
+  let cotaEsgotada = false;
+
   for (let page = 0; page < MAX_PAGES; page++) {
+    if (!(await consumirCotaPlaces())) {
+      cotaEsgotada = true;
+      break;
+    }
     const res = await fetch(ENDPOINT, {
       method: "POST",
       cache: "no-store",
@@ -62,5 +69,5 @@ export async function buscarNegociosNoMapa(cidade: string, termo: string) {
   }
 
   const unicos = [...new Map(encontrados.map((l) => [l.telefone, l])).values()];
-  return { leads: unicos, fixos, semTelefone };
+  return { leads: unicos, fixos, semTelefone, cotaEsgotada };
 }
