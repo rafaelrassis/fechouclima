@@ -248,3 +248,28 @@ model QuoteNudge {
   @@index([userId, kind, createdAt])
   @@index([quoteId])
 }
+
+enum LeadStatus {
+  NOVO
+  CONTATADO
+  RESPONDEU
+  TESTANDO
+  CLIENTE
+  DESCARTADO
+}
+
+// Prospecção de técnicos (uso interno, só admin). Abordagem manual via wa.me: nada é enviado sem clique humano.
+model Lead {
+  id          String     @id @default(cuid())
+  nome        String
+  telefone    String     @unique // só dígitos, com 55
+  cidade      String?
+  origem      String // gmaps, instagram, indicacao, grupo...
+  status      LeadStatus @default(NOVO)
+  notas       String?
+  contatadoEm DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, createdAt])
+}
