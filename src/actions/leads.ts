@@ -65,10 +65,3 @@ export async function atualizarStatusLead(leadId: string, status: string): Promi
   revalidatePath("/admin/leads");
   return { ok: true, data: undefined };
 }
-
-export async function excluirLead(leadId: string): Promise<ActionResult> {
-  await requireAdmin();
-  await db.lead.deleteMany({ where: { id: leadId } });
-  revalidatePath("/admin/leads");
-  return { ok: true, data: undefined };
-}

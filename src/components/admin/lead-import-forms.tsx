@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 function Resumo({ r }: { r: ImportSummary }) {
   return (
     <p className="rounded-md bg-muted p-3 text-sm" role="status">
-      <strong>{r.novos}</strong> novo(s) · {r.jaExistiam} já existiam · {r.fixos} fixo(s) ignorado(s) · {r.invalidos} sem telefone/inválido(s)
+      <strong>{r.novos}</strong> novo(s) · {r.jaExistiam} já existiam · {r.jaSaoUsuarios} já são usuários · {r.fixos} fixo(s) ignorado(s) · {r.invalidos} sem telefone/inválido(s)
       {r.cotaEsgotada && <span className="mt-1 block font-semibold text-warning">Cota grátis do mês acabou no meio da busca: resultado parcial.</span>}
     </p>
   );

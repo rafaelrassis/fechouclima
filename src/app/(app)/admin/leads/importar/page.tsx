@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
-import { usoMensalPlaces } from "@/lib/places-quota";
+import { usoPlaces } from "@/lib/places-quota";
 import { BuscarNoMapaForm, ColarListaForm } from "@/components/admin/lead-import-forms";
 
 export const metadata = { title: "Importar leads" };
@@ -8,7 +8,7 @@ export const metadata = { title: "Importar leads" };
 export default async function ImportarLeadsPage() {
   await requireAdmin();
   const temChave = !!process.env.GOOGLE_PLACES_API_KEY;
-  const { usadas, limite } = await usoMensalPlaces();
+  const { usadas, limite, usadasHoje, limiteDia } = await usoPlaces();
 
   return (
     <div className="space-y-3">
@@ -22,12 +22,14 @@ export default async function ImportarLeadsPage() {
       {temChave ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Cota grátis do Google este mês: {usadas}/{limite} requisições (cada busca usa até 3). Zera todo mês.
+            Google: hoje {usadasHoje}/{limiteDia} · mês {usadas}/{limite} requisições (cada busca usa até 3).
           </p>
-          {usadas < limite ? (
+          {usadas < limite && usadasHoje < limiteDia ? (
             <BuscarNoMapaForm />
           ) : (
-            <p className="rounded-md bg-muted p-3 text-sm">Cota grátis do mês esgotada. Use a lista abaixo.</p>
+            <p className="rounded-md bg-muted p-3 text-sm">
+              {usadasHoje >= limiteDia ? "Limite de buscas de hoje atingido." : "Cota grátis do mês esgotada."} Use a lista abaixo.
+            </p>
           )}
         </>
       ) : (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { leadWhatsAppUrl } from "@/lib/lead-message";
+import { inicioDoDiaSP, limiteContatosDia } from "@/lib/lead-limits";
 import { LEAD_STATUSES, leadStatusSchema } from "@/lib/validations/lead";
 import { Card, CardContent } from "@/components/ui/card";
 import { LeadForm } from "@/components/admin/lead-form";
@@ -18,7 +19,9 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   const filtro = leadStatusSchema.safeParse(status);
   const statusAtivo = filtro.success ? filtro.data : undefined;
 
-  const [leads, contagens] = await Promise.all([
+  const limiteDia = limiteContatosDia();
+  const [contatadosHoje, leads, contagens] = await Promise.all([
+    db.lead.count({ where: { contatadoEm: { gte: inicioDoDiaSP() } } }),
     db.lead.findMany({
       where: statusAtivo ? { status: statusAtivo } : undefined,
       orderBy: { createdAt: "desc" },
@@ -28,6 +31,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   ]);
   const porStatus = new Map(contagens.map((c) => [c.status, c._count._all]));
   const total = contagens.reduce((acc, c) => acc + c._count._all, 0);
+  const limiteAtingido = contatadosHoje >= limiteDia;
 
   return (
     <div className="space-y-3">
@@ -37,6 +41,11 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
           Importar / buscar
         </Link>
       </div>
+
+      <p className={cn("text-xs", limiteAtingido ? "font-semibold text-warning" : "text-muted-foreground")}>
+        Contatos hoje: {contatadosHoje}/{limiteDia}
+        {limiteAtingido && " · limite atingido, volte amanhã"}
+      </p>
 
       <LeadForm />
 
@@ -70,7 +79,13 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
               </p>
               {l.notas && <p className="mt-0.5 text-xs text-muted-foreground">{l.notas}</p>}
             </div>
-            <LeadActions id={l.id} status={l.status} waUrl={leadWhatsAppUrl(l)} />
+            <LeadActions
+              id={l.id}
+              status={l.status}
+              waUrl={leadWhatsAppUrl(l)}
+              contatadoEm={l.contatadoEm?.toISOString() ?? null}
+              limiteAtingido={limiteAtingido}
+            />
           </CardContent>
         </Card>
       ))}
