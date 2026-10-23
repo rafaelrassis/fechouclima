@@ -31,7 +31,12 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
 
   return (
     <div className="space-y-3">
-      <h1 className="text-lg font-semibold">Leads ({total})</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Leads ({total})</h1>
+        <Link href="/admin/leads/importar" className="flex h-11 items-center text-sm font-semibold text-primary">
+          Importar / buscar
+        </Link>
+      </div>
 
       <LeadForm />
 
