@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { usoPlaces } from "@/lib/places-quota";
+import { getLeadAutomation } from "@/lib/lead-automation";
 import { BuscarNoMapaForm, ColarListaForm } from "@/components/admin/lead-import-forms";
+import { LeadAutomationForm } from "@/components/admin/lead-automation-form";
 
 export const metadata = { title: "Importar leads" };
 
 export default async function ImportarLeadsPage() {
   await requireAdmin();
   const temChave = !!process.env.GOOGLE_PLACES_API_KEY;
-  const { usadas, limite, usadasHoje, limiteDia } = await usoPlaces();
+  const [{ usadas, limite, usadasHoje, limiteDia }, automacao] = await Promise.all([usoPlaces(), getLeadAutomation()]);
 
   return (
     <div className="space-y-3">
@@ -18,6 +20,8 @@ export default async function ImportarLeadsPage() {
           Voltar
         </Link>
       </div>
+
+      {temChave && <LeadAutomationForm ativo={automacao.ativo} cidades={automacao.cidades} termo={automacao.termo} />}
 
       {temChave ? (
         <>

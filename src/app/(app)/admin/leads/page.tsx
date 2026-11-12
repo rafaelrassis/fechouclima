@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { leadWhatsAppUrl } from "@/lib/lead-message";
 import { inicioDoDiaSP, intervaloEntreContatosMs, limiteContatosDia } from "@/lib/lead-limits";
+import { getLeadAutomation } from "@/lib/lead-automation";
 import { LEAD_STATUSES, leadStatusSchema } from "@/lib/validations/lead";
 import { Card, CardContent } from "@/components/ui/card";
 import { LeadForm } from "@/components/admin/lead-form";
@@ -20,7 +21,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   const statusAtivo = filtro.success ? filtro.data : undefined;
 
   const limiteDia = limiteContatosDia();
-  const [contatadosHoje, ultimoContato, leads, contagens] = await Promise.all([
+  const [contatadosHoje, ultimoContato, leads, contagens, automacao] = await Promise.all([
     db.lead.count({ where: { contatadoEm: { gte: inicioDoDiaSP() } } }),
     db.lead.findFirst({
       where: { contatadoEm: { not: null } },
@@ -33,6 +34,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
       take: 200,
     }),
     db.lead.groupBy({ by: ["status"], _count: { _all: true } }),
+    getLeadAutomation(),
   ]);
   const porStatus = new Map(contagens.map((c) => [c.status, c._count._all]));
   const total = contagens.reduce((acc, c) => acc + c._count._all, 0);
@@ -51,6 +53,13 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
       <p className={cn("text-xs", limiteAtingido ? "font-semibold text-warning" : "text-muted-foreground")}>
         Contatos hoje: {contatadosHoje}/{limiteDia}
         {limiteAtingido && " · limite atingido, volte amanhã"}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Busca automática: <span className={automacao.ativo ? "font-semibold text-success" : "font-semibold"}>{automacao.ativo ? "ativa" : "pausada"}</span>
+        {" · "}
+        <Link href="/admin/leads/importar" className="font-semibold text-primary">
+          gerenciar
+        </Link>
       </p>
 
       <LeadForm />

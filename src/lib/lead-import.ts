@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { normalizeBrPhone } from "@/lib/whatsapp";
 
 export type ParsedLead = { nome: string; telefone: string; cidade?: string };
@@ -62,4 +63,24 @@ export function parseLeadLines(texto: string, cidadePadrao?: string): ParseResul
   }
 
   return { leads, fixos, invalidos, repetidos };
+}
+
+// Nunca recria quem já está na lista (telefone único, inclusive descartados) nem quem já é técnico cadastrado.
+// Usado pela importação manual e pela busca automática (sem revalidatePath: cada chamador revalida a sua rota).
+export async function salvarLeadsNovos(
+  leads: ParsedLead[],
+  origem: string,
+): Promise<{ novos: number; jaExistiam: number; jaSaoUsuarios: number }> {
+  if (leads.length === 0) return { novos: 0, jaExistiam: 0, jaSaoUsuarios: 0 };
+
+  const usuarios = await db.user.findMany({ where: { phone: { not: null } }, select: { phone: true } });
+  const telefonesUsuarios = new Set(usuarios.map((u) => normalizeBrPhone(u.phone ?? "")));
+  const candidatos = leads.filter((l) => !telefonesUsuarios.has(l.telefone));
+  const jaSaoUsuarios = leads.length - candidatos.length;
+
+  const res = await db.lead.createMany({
+    data: candidatos.map((l) => ({ nome: l.nome, telefone: l.telefone, cidade: l.cidade ?? null, origem })),
+    skipDuplicates: true,
+  });
+  return { novos: res.count, jaExistiam: candidatos.length - res.count, jaSaoUsuarios };
 }

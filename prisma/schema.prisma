@@ -273,3 +273,13 @@ model Lead {
 
   @@index([status, createdAt])
 }
+
+// Configuração da busca automática de leads (singleton, id fixo "default"). Buscar é automático
+// (cron); contatar continua manual (clique humano no wa.me), por decisão de design do Lead.
+model LeadAutomation {
+  id        String   @id @default("default")
+  ativo     Boolean  @default(true)
+  cidades   String // uma cidade por linha
+  termo     String   @default("ar condicionado instalação")
+  updatedAt DateTime @updatedAt
+}

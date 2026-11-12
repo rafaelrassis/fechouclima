@@ -3,7 +3,7 @@ import { session } from "./setup";
 
 export async function resetDb() {
   await db.$executeRawUnsafe(
-    'TRUNCATE "RateLimit", "PasswordResetToken", "QuotePhoto", "QuoteNudge", "PushSubscription", "QuoteItem", "Quote", "Customer", "Service", "User" RESTART IDENTITY CASCADE',
+    'TRUNCATE "RateLimit", "PasswordResetToken", "QuotePhoto", "QuoteNudge", "PushSubscription", "QuoteItem", "Quote", "Customer", "Service", "User", "Lead", "LeadAutomation" RESTART IDENTITY CASCADE',
   );
   session.userId = "";
   session.issuedAt = Date.now();
