@@ -2,7 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { leadWhatsAppUrl } from "@/lib/lead-message";
-import { inicioDoDiaSP, limiteContatosDia } from "@/lib/lead-limits";
+import { inicioDoDiaSP, intervaloEntreContatosMs, limiteContatosDia } from "@/lib/lead-limits";
 import { LEAD_STATUSES, leadStatusSchema } from "@/lib/validations/lead";
 import { Card, CardContent } from "@/components/ui/card";
 import { LeadForm } from "@/components/admin/lead-form";
@@ -20,8 +20,13 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   const statusAtivo = filtro.success ? filtro.data : undefined;
 
   const limiteDia = limiteContatosDia();
-  const [contatadosHoje, leads, contagens] = await Promise.all([
+  const [contatadosHoje, ultimoContato, leads, contagens] = await Promise.all([
     db.lead.count({ where: { contatadoEm: { gte: inicioDoDiaSP() } } }),
+    db.lead.findFirst({
+      where: { contatadoEm: { not: null } },
+      orderBy: { contatadoEm: "desc" },
+      select: { contatadoEm: true },
+    }),
     db.lead.findMany({
       where: statusAtivo ? { status: statusAtivo } : undefined,
       orderBy: { createdAt: "desc" },
@@ -32,6 +37,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   const porStatus = new Map(contagens.map((c) => [c.status, c._count._all]));
   const total = contagens.reduce((acc, c) => acc + c._count._all, 0);
   const limiteAtingido = contatadosHoje >= limiteDia;
+  const liberaEm = ultimoContato?.contatadoEm ? ultimoContato.contatadoEm.getTime() + intervaloEntreContatosMs() : 0;
 
   return (
     <div className="space-y-3">
@@ -85,6 +91,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
               waUrl={leadWhatsAppUrl(l)}
               contatadoEm={l.contatadoEm?.toISOString() ?? null}
               limiteAtingido={limiteAtingido}
+              liberaEm={liberaEm}
             />
           </CardContent>
         </Card>

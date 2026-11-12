@@ -12,3 +12,9 @@ export function limiteContatosDia(): number {
   const n = Number(process.env.LEADS_DAILY_CONTACT_LIMIT);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 30;
 }
+
+// Intervalo mínimo entre contatos, em ms (padrão 60s): evita clicar em sequência, mais parecido com envio manual humano.
+export function intervaloEntreContatosMs(): number {
+  const n = Number(process.env.LEADS_MIN_INTERVAL_SECONDS);
+  return (Number.isFinite(n) && n > 0 ? Math.floor(n) : 60) * 1000;
+}

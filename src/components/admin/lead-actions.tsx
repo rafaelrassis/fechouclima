@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { atualizarStatusLead, marcarContatado } from "@/actions/leads";
@@ -12,13 +12,22 @@ type Props = {
   waUrl: string;
   contatadoEm: string | null;
   limiteAtingido: boolean;
+  liberaEm: number;
 };
 
 const BTN = "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-semibold";
 
-export function LeadActions({ id, status, waUrl, contatadoEm, limiteAtingido }: Props) {
+export function LeadActions({ id, status, waUrl, contatadoEm, limiteAtingido, liberaEm }: Props) {
   const [pending, startTransition] = useTransition();
+  const [agora, setAgora] = useState(() => Date.now());
   const jaContatado = status !== "NOVO";
+  const aguardando = liberaEm > agora;
+
+  useEffect(() => {
+    if (liberaEm <= Date.now()) return;
+    const t = setInterval(() => setAgora(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [liberaEm]);
 
   function onStatus(next: string) {
     startTransition(async () => {
@@ -49,6 +58,8 @@ export function LeadActions({ id, status, waUrl, contatadoEm, limiteAtingido }: 
     acao = <span className={`${BTN} bg-muted text-muted-foreground`}>Já é cliente</span>;
   } else if (limiteAtingido && !jaContatado) {
     acao = <span className={`${BTN} bg-muted text-muted-foreground`}>Limite de hoje atingido</span>;
+  } else if (aguardando) {
+    acao = <span className={`${BTN} bg-muted text-muted-foreground`}>Aguarde {Math.ceil((liberaEm - agora) / 1000)}s</span>;
   } else {
     acao = (
       <a
