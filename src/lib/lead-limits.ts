@@ -7,6 +7,15 @@ export function inicioDoDiaSP(d: Date = new Date()): Date {
   return new Date(`${dataSP(d)}T00:00:00-03:00`);
 }
 
+// 0=domingo...6=sábado, no fuso de SP. Meio-dia evita qualquer efeito de fuso na conversão.
+export function diaSemanaSP(d: Date = new Date()): number {
+  return new Date(`${dataSP(d)}T12:00:00-03:00`).getDay();
+}
+
+export function horaSP(d: Date = new Date()): number {
+  return Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", hour: "numeric", hourCycle: "h23" }).format(d));
+}
+
 // Quantos "Abrir WhatsApp" por dia (padrão 30: volume baixo reduz risco de denúncia/banimento do número).
 export function limiteContatosDia(): number {
   const n = Number(process.env.LEADS_DAILY_CONTACT_LIMIT);

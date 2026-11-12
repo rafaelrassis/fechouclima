@@ -1,20 +1,22 @@
 import { db } from "@/lib/db";
-import { getLeadAutomation, cidadesDaAutomacao } from "@/lib/lead-automation";
+import { deveRodarAgora, getLeadAutomation, cidadesDaAutomacao } from "@/lib/lead-automation";
 import { salvarLeadsNovos } from "@/lib/lead-import";
 import { limiteContatosDia } from "@/lib/lead-limits";
 import { buscarNegociosNoMapa, PlacesConfigError } from "@/lib/places";
 
 export type ResultadoBuscaAutomatica =
-  | { executada: false; motivo: "desativada" | "sem_chave" | "sem_cidades" }
+  | { executada: false; motivo: "desativada" | "fora_do_horario" | "sem_chave" | "sem_cidades" }
   | { executada: true; novos: number; cidadesBuscadas: number; cotaEsgotada: boolean };
 
-// Roda 1x/dia (cron). Busca cidade por cidade até a cota diária/mensal do Google acabar ou já
-// haver leads NOVOS suficientes para o limite de contato de hoje (sem sentido buscar mais do que
-// se consegue contatar manualmente no dia). Nunca envia mensagem: só alimenta a fila que o técnico
-// abre no WhatsApp com 1 toque em /admin/leads.
-export async function executarBuscaAutomaticaLeads(): Promise<ResultadoBuscaAutomatica> {
+// O cron chama isso de hora em hora; só busca de fato quando bate com o dia da semana e a hora
+// configurados em /admin/leads/importar (horário de SP). Busca cidade por cidade até a cota
+// diária/mensal do Google acabar ou já haver leads NOVOS suficientes para o limite de contato de
+// hoje (sem sentido buscar mais do que se consegue contatar manualmente no dia). Nunca envia
+// mensagem: só alimenta a fila que o técnico abre no WhatsApp com 1 toque em /admin/leads.
+export async function executarBuscaAutomaticaLeads(agora: Date = new Date()): Promise<ResultadoBuscaAutomatica> {
   const automacao = await getLeadAutomation();
   if (!automacao.ativo) return { executada: false, motivo: "desativada" };
+  if (!deveRodarAgora(automacao, agora)) return { executada: false, motivo: "fora_do_horario" };
   if (!process.env.GOOGLE_PLACES_API_KEY) return { executada: false, motivo: "sem_chave" };
 
   const cidades = cidadesDaAutomacao(automacao.cidades);

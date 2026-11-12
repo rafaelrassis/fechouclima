@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { usoPlaces } from "@/lib/places-quota";
-import { getLeadAutomation } from "@/lib/lead-automation";
+import { diasSemanaDaAutomacao, getLeadAutomation } from "@/lib/lead-automation";
 import { BuscarNoMapaForm, ColarListaForm } from "@/components/admin/lead-import-forms";
 import { LeadAutomationForm } from "@/components/admin/lead-automation-form";
 
@@ -21,7 +21,15 @@ export default async function ImportarLeadsPage() {
         </Link>
       </div>
 
-      {temChave && <LeadAutomationForm ativo={automacao.ativo} cidades={automacao.cidades} termo={automacao.termo} />}
+      {temChave && (
+        <LeadAutomationForm
+          ativo={automacao.ativo}
+          cidades={automacao.cidades}
+          termo={automacao.termo}
+          diasSemana={diasSemanaDaAutomacao(automacao.diasSemana)}
+          hora={automacao.hora}
+        />
+      )}
 
       {temChave ? (
         <>

@@ -23,6 +23,8 @@ export async function definirAtivaAutomacaoLeads(ativo: boolean): Promise<Action
 const configSchema = z.object({
   cidades: z.string().trim().max(2000, "Lista de cidades grande demais."),
   termo: z.string().trim().min(2, "Termo muito curto.").max(80),
+  diasSemana: z.array(z.number().int().min(0).max(6)).min(1, "Selecione pelo menos um dia."),
+  hora: z.number().int().min(0).max(23),
 });
 
 export async function salvarConfigAutomacaoLeads(input: z.input<typeof configSchema>): Promise<ActionResult> {
@@ -30,10 +32,11 @@ export async function salvarConfigAutomacaoLeads(input: z.input<typeof configSch
   const parsed = configSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Confira os campos." };
 
+  const diasSemana = [...new Set(parsed.data.diasSemana)].sort().join(",");
   await db.leadAutomation.upsert({
     where: { id: LEAD_AUTOMATION_ID },
-    create: { id: LEAD_AUTOMATION_ID, cidades: parsed.data.cidades, termo: parsed.data.termo },
-    update: { cidades: parsed.data.cidades, termo: parsed.data.termo },
+    create: { id: LEAD_AUTOMATION_ID, cidades: parsed.data.cidades, termo: parsed.data.termo, diasSemana, hora: parsed.data.hora },
+    update: { cidades: parsed.data.cidades, termo: parsed.data.termo, diasSemana, hora: parsed.data.hora },
   });
   revalidatePath("/admin/leads/importar");
   return { ok: true, data: undefined };

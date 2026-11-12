@@ -2,6 +2,6 @@
   "crons": [
     { "path": "/api/cron/lembretes", "schedule": "0 11 * * 1" },
     { "path": "/api/cron/expirar", "schedule": "0 11 * * *" },
-    { "path": "/api/cron/leads-busca", "schedule": "0 9 * * *" }
+    { "path": "/api/cron/leads-busca", "schedule": "0 * * * *" }
   ]
 }
