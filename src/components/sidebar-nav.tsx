@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Home, Settings, Snowflake, Users, Wrench } from "lucide-react";
+import { FileText, Home, Settings, Shield, Snowflake, Users, Wrench } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -44,6 +44,21 @@ export function SidebarNav({ userName, isAdmin }: { userName: string; isAdmin?: 
             </Link>
           );
         })}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            aria-current={pathname === "/admin" || pathname.startsWith("/admin/") ? "page" : undefined}
+            className={cn(
+              "flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold",
+              pathname === "/admin" || pathname.startsWith("/admin/")
+                ? "bg-white/15 text-white"
+                : "text-white/70 hover:bg-white/10 hover:text-white",
+            )}
+          >
+            <Shield className="size-5" strokeWidth={2.2} />
+            Admin
+          </Link>
+        )}
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 rounded-2xl bg-white/10 p-3">
@@ -52,14 +67,7 @@ export function SidebarNav({ userName, isAdmin }: { userName: string; isAdmin?: 
         </span>
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-bold">{userName}</span>
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Link href="/admin" className="text-xs font-semibold text-white/70 hover:text-white">
-                Admin
-              </Link>
-            )}
-            <LogoutButton className="h-auto min-h-0 p-0 text-xs font-medium text-white/70 hover:bg-transparent hover:text-white" />
-          </div>
+          <LogoutButton className="h-auto min-h-0 p-0 text-xs font-medium text-white/70 hover:bg-transparent hover:text-white" />
         </div>
       </div>
     </aside>
