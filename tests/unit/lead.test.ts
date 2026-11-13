@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEAD_TEMPLATES, leadMessage, leadTemplateId, leadVideoUrl, leadWhatsAppUrl } from "@/lib/lead-message";
+import { LEAD_TEMPLATES, leadMessage, leadTemplateId, leadVideoUrl, leadWhatsAppUrl, leadFollowUpMessage } from "@/lib/lead-message";
 import { registrarLeadSchema } from "@/lib/validations/lead";
 
 describe("lead", () => {
@@ -34,5 +34,15 @@ describe("lead", () => {
     expect(ok.success && ok.data.telefone).toBe("11912345678");
     expect(registrarLeadSchema.safeParse({ nome: "Ana", telefone: "123", origem: "gmaps" }).success).toBe(false);
     expect(registrarLeadSchema.safeParse({ nome: "Ana", telefone: "11912345678", origem: "spam" }).success).toBe(false);
+  });
+
+  it("follow-up muda conforme viu o vídeo e sempre traz saída", () => {
+    const base = { id: "cabc123def456ghi789jkl012", nome: "Ana Souza" };
+    const viu = leadFollowUpMessage({ ...base, viu: true });
+    const naoViu = leadFollowUpMessage({ ...base, viu: false });
+    expect(viu).toContain("Vi que você");
+    expect(naoViu).toContain("/v/cabc123def456ghi789jkl012");
+    expect(viu).toContain("não te chamo mais");
+    expect(naoViu).toContain("não te chamo mais");
   });
 });

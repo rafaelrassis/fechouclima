@@ -40,3 +40,16 @@ export function leadMessage(lead: LeadMsgInput): string {
 export function leadWhatsAppUrl(lead: LeadMsgInput & { telefone: string }): string {
   return buildWhatsAppUrl(lead.telefone, leadMessage(lead));
 }
+
+// Segundo contato (botão "Falar de novo"): muda o texto conforme o lead tenha ou não aberto o vídeo.
+export function leadFollowUpMessage(lead: LeadMsgInput & { viu: boolean }): string {
+  const p = lead.nome.trim().split(/\s+/)[0] ?? "";
+  if (lead.viu) {
+    return `Oi ${p}! Vi que você deu uma olhada no vídeo do FechouClima 🙂 Ficou alguma dúvida? Se quiser, eu configuro seu primeiro orçamento com você em 5 minutos. Se não for pra você, é só avisar que não te chamo mais.`;
+  }
+  return `Oi ${p}, tudo bem? Passando só pra ver se você conseguiu abrir o vídeo (15s): ${leadVideoUrl(lead.id)} Se não tiver interesse, é só me avisar que não te chamo mais 🙂`;
+}
+
+export function leadFollowUpWhatsAppUrl(lead: LeadMsgInput & { telefone: string; viu: boolean }): string {
+  return buildWhatsAppUrl(lead.telefone, leadFollowUpMessage(lead));
+}
