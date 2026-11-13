@@ -5,10 +5,11 @@ export function leadMessage(nome: string, cidade?: string | null): string {
   const primeiro = nome.trim().split(/\s+/)[0] ?? "";
   const local = cidade ? ` em ${cidade}` : "";
   return (
-    `Oi ${primeiro}, tudo bem? Sou o Rafael, do FechouClima. ` +
+    `Oi ${primeiro}! 👋 Sou o Rafael, do FechouClima. ` +
     `Criei um app grátis pra técnico de ar-condicionado${local} fazer orçamento no celular em 1 minuto ` +
-    `e mandar pelo WhatsApp, com o cliente aprovando por um link. ` +
-    `Posso te mostrar? Se não for do seu interesse, é só avisar que não te chamo mais.`
+    `e mandar pelo WhatsApp, com o cliente aprovando com 1 toque, sem precisar de login. ` +
+    `https://fechouclima.com.br ` +
+    `Posso te mostrar? Se não for do seu interesse, só me avisar que não te chamo mais 🙂`
   );
 }
 

@@ -5,8 +5,9 @@ import { registrarLeadSchema } from "@/lib/validations/lead";
 describe("lead", () => {
   it("monta mensagem com primeiro nome, cidade e saída de descadastro", () => {
     const msg = leadMessage("João da Silva Refrigeração", "Campinas");
-    expect(msg).toContain("Oi João,");
+    expect(msg).toContain("Oi João!");
     expect(msg).toContain("em Campinas");
+    expect(msg).toContain("fechouclima.com.br");
     expect(msg).toContain("não te chamo mais");
   });
 
