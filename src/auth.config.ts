@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const PUBLIC_PREFIXES = ["/login", "/cadastro", "/o/", "/api/health", "/api/cron/", "/descadastro", "/esqueci-senha", "/privacidade", "/termos", "/redefinir-senha", "/api/descadastro", "/icons/", "/icon", "/apple-icon", "/manifest"];
+const PUBLIC_PREFIXES = ["/login", "/cadastro", "/o/", "/v/", "/api/health", "/api/cron/", "/descadastro", "/esqueci-senha", "/privacidade", "/termos", "/redefinir-senha", "/api/descadastro", "/icons/", "/icon", "/apple-icon", "/manifest"];
 
 export const authConfig = {
   pages: { signIn: "/login" },

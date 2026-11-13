@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { LIMITS, getClientIp, rateLimit } from "@/lib/rate-limit";
 import { requireAdmin } from "@/lib/session";
+import { leadTemplateId } from "@/lib/lead-message";
 import { normalizeBrPhone } from "@/lib/whatsapp";
 import { leadStatusSchema, registrarLeadSchema, type RegistrarLeadInput } from "@/lib/validations/lead";
 import type { ActionResult } from "@/types/action";
@@ -42,7 +44,7 @@ export async function marcarContatado(leadId: string): Promise<ActionResult> {
   await requireAdmin();
   await db.lead.updateMany({
     where: { id: leadId, status: "NOVO" },
-    data: { status: "CONTATADO", contatadoEm: new Date() },
+    data: { status: "CONTATADO", contatadoEm: new Date(), templateId: leadTemplateId(leadId) },
   });
   revalidatePath("/admin/leads");
   return { ok: true, data: undefined };
@@ -62,6 +64,22 @@ export async function atualizarStatusLead(leadId: string, status: string): Promi
   });
   if (res.count === 0) return { ok: false, error: "Lead não encontrado." };
 
+  revalidatePath("/admin/leads");
+  return { ok: true, data: undefined };
+}
+
+// Pública (sem auth): beacon de /v/[leadId]. Só conta com a aba visível (robôs de prévia não executam JS).
+export async function marcarVideoVisto(leadId: string): Promise<ActionResult> {
+  const rl = await rateLimit(`public:${await getClientIp()}`, LIMITS.publicAction.limit, LIMITS.publicAction.windowSec);
+  if (!rl.ok) return { ok: false, error: "Muitas tentativas." };
+  if (!/^c[a-z0-9]{20,30}$/.test(leadId)) return { ok: false, error: "Link inválido" };
+
+  const { count } = await db.lead.updateMany({
+    where: { id: leadId },
+    data: { videoViews: { increment: 1 } },
+  });
+  if (count === 0) return { ok: false, error: "Link inválido" };
+  await db.lead.updateMany({ where: { id: leadId, videoViewedAt: null }, data: { videoViewedAt: new Date() } });
   revalidatePath("/admin/leads");
   return { ok: true, data: undefined };
 }

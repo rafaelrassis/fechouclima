@@ -268,6 +268,9 @@ model Lead {
   status      LeadStatus @default(NOVO)
   notas       String?
   contatadoEm DateTime?
+  templateId  String? // qual variação da mensagem foi enviada (A/B)
+  videoViewedAt DateTime? // 1ª vez que abriu a página do vídeo (/v/[id])
+  videoViews  Int        @default(0)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
