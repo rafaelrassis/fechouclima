@@ -27,7 +27,6 @@ export default async function ImportarLeadsPage() {
           cidades={automacao.cidades}
           termo={automacao.termo}
           diasSemana={diasSemanaDaAutomacao(automacao.diasSemana)}
-          hora={automacao.hora}
         />
       )}
 

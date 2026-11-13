@@ -1,18 +1,17 @@
-import { db } from "@/lib/db";
 import { deveRodarAgora, getLeadAutomation, cidadesDaAutomacao } from "@/lib/lead-automation";
 import { salvarLeadsNovos } from "@/lib/lead-import";
-import { limiteContatosDia } from "@/lib/lead-limits";
 import { buscarNegociosNoMapa, PlacesConfigError } from "@/lib/places";
 
 export type ResultadoBuscaAutomatica =
   | { executada: false; motivo: "desativada" | "fora_do_horario" | "sem_chave" | "sem_cidades" }
   | { executada: true; novos: number; cidadesBuscadas: number; cotaEsgotada: boolean };
 
-// O cron chama isso de hora em hora; só busca de fato quando bate com o dia da semana e a hora
-// configurados em /admin/leads/importar (horário de SP). Busca cidade por cidade até a cota
-// diária/mensal do Google acabar ou já haver leads NOVOS suficientes para o limite de contato de
-// hoje (sem sentido buscar mais do que se consegue contatar manualmente no dia). Nunca envia
-// mensagem: só alimenta a fila que o técnico abre no WhatsApp com 1 toque em /admin/leads.
+// O cron roda 1x/dia (vercel.json; sem Vercel Pro não dá pra escolher hora exata); só busca de
+// fato nos dias da semana configurados em /admin/leads/importar (horário de SP). Varre TODAS as
+// cidades configuradas nessa única rodada do dia (para de cidade em cidade só quando a cota
+// diária/mensal do Google acaba): como só há 1 chance por dia, é melhor gastar a cota formando
+// fila para os próximos dias do que parar cedo e nunca alcançar cidades mais abaixo da lista.
+// Nunca envia mensagem: só alimenta a fila que o técnico abre no WhatsApp com 1 toque em /admin/leads.
 export async function executarBuscaAutomaticaLeads(agora: Date = new Date()): Promise<ResultadoBuscaAutomatica> {
   const automacao = await getLeadAutomation();
   if (!automacao.ativo) return { executada: false, motivo: "desativada" };
@@ -22,15 +21,11 @@ export async function executarBuscaAutomaticaLeads(agora: Date = new Date()): Pr
   const cidades = cidadesDaAutomacao(automacao.cidades);
   if (cidades.length === 0) return { executada: false, motivo: "sem_cidades" };
 
-  const limiteFila = limiteContatosDia();
   let novosTotal = 0;
   let cidadesBuscadas = 0;
   let cotaEsgotada = false;
 
   for (const cidade of cidades) {
-    const novosNaFila = await db.lead.count({ where: { status: "NOVO" } });
-    if (novosNaFila >= limiteFila) break;
-
     let resultado: Awaited<ReturnType<typeof buscarNegociosNoMapa>>;
     try {
       resultado = await buscarNegociosNoMapa(cidade, automacao.termo);

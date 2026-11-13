@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-type Props = { ativo: boolean; cidades: string; termo: string; diasSemana: number[]; hora: number };
+type Props = { ativo: boolean; cidades: string; termo: string; diasSemana: number[] };
 
 const DIAS = [
   { v: 0, l: "Dom" },
@@ -21,7 +21,7 @@ const DIAS = [
   { v: 6, l: "Sáb" },
 ];
 
-export function LeadAutomationForm({ ativo, cidades, termo, diasSemana, hora }: Props) {
+export function LeadAutomationForm({ ativo, cidades, termo, diasSemana }: Props) {
   const [pendingToggle, startToggle] = useTransition();
   const [pendingSave, startSave] = useTransition();
   const [dias, setDias] = useState<number[]>(diasSemana);
@@ -50,7 +50,6 @@ export function LeadAutomationForm({ ativo, cidades, termo, diasSemana, hora }: 
         cidades: String(fd.get("cidades") ?? ""),
         termo: String(fd.get("termo") ?? ""),
         diasSemana: dias,
-        hora: Number(fd.get("hora") ?? 6),
       });
       if (res.ok) toast.success("Configuração salva");
       else toast.error(res.error);
@@ -62,7 +61,7 @@ export function LeadAutomationForm({ ativo, cidades, termo, diasSemana, hora }: 
       <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-semibold">Busca automática</h2>
-          <p className="text-xs text-muted-foreground">Roda sozinha nos dias/horário abaixo. Contatar continua manual (1 clique por lead).</p>
+          <p className="text-xs text-muted-foreground">Roda sozinha 1x/dia (de manhã) nos dias marcados. Contatar continua manual (1 clique por lead).</p>
         </div>
         <Button
           type="button"
@@ -95,21 +94,6 @@ export function LeadAutomationForm({ ativo, cidades, termo, diasSemana, hora }: 
               </button>
             ))}
           </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="auto-hora">Horário (hora de SP)</Label>
-          <select
-            id="auto-hora"
-            name="hora"
-            defaultValue={hora}
-            className="h-12 w-full rounded-md border border-input bg-transparent px-2 text-base"
-          >
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h} value={h}>
-                {String(h).padStart(2, "0")}:00
-              </option>
-            ))}
-          </select>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="auto-cidades">Cidades (uma por linha)</Label>

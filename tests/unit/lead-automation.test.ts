@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deveRodarAgora, diasSemanaDaAutomacao } from "@/lib/lead-automation";
-import { diaSemanaSP, horaSP } from "@/lib/lead-limits";
+import { diaSemanaSP } from "@/lib/lead-limits";
 
 describe("agendamento da busca automática", () => {
   it("parseia o CSV de dias da semana, ignorando lixo", () => {
@@ -9,13 +9,11 @@ describe("agendamento da busca automática", () => {
     expect(diasSemanaDaAutomacao("1, , 9, abc")).toEqual([1]);
   });
 
-  it("só roda no dia da semana e na hora configurados (horário de SP)", () => {
-    const agora = new Date("2026-11-12T09:00:00-03:00"); // quinta, 9h em SP
+  it("só roda no dia da semana configurado (horário de SP)", () => {
+    const agora = new Date("2026-11-12T09:00:00-03:00"); // quinta em SP
     expect(diaSemanaSP(agora)).toBe(4);
-    expect(horaSP(agora)).toBe(9);
 
-    expect(deveRodarAgora({ diasSemana: "4", hora: 9 }, agora)).toBe(true);
-    expect(deveRodarAgora({ diasSemana: "1,2,3", hora: 9 }, agora)).toBe(false); // dia errado
-    expect(deveRodarAgora({ diasSemana: "4", hora: 10 }, agora)).toBe(false); // hora errada
+    expect(deveRodarAgora({ diasSemana: "4" }, agora)).toBe(true);
+    expect(deveRodarAgora({ diasSemana: "1,2,3" }, agora)).toBe(false); // dia errado
   });
 });

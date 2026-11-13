@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { diaSemanaSP, horaSP } from "@/lib/lead-limits";
+import { diaSemanaSP } from "@/lib/lead-limits";
 
 export const LEAD_AUTOMATION_ID = "default";
 
@@ -25,8 +25,9 @@ export function diasSemanaDaAutomacao(diasSemana: string): number[] {
     .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
 }
 
-// O cron roda de hora em hora; só executa de fato quando bate com o dia da semana e a hora
-// configurados (horário de SP). Fora da janela, a chamada é um no-op (ver motivo "fora_do_horario").
-export function deveRodarAgora(automacao: { diasSemana: string; hora: number }, agora: Date = new Date()): boolean {
-  return diasSemanaDaAutomacao(automacao.diasSemana).includes(diaSemanaSP(agora)) && horaSP(agora) === automacao.hora;
+// O cron roda 1x/dia (horário fixo em vercel.json: sem Vercel Pro não dá pra escolher hora exata);
+// aqui só filtramos o dia da semana configurado. Fora dos dias marcados, a chamada é um no-op
+// (ver motivo "fora_do_horario").
+export function deveRodarAgora(automacao: { diasSemana: string }, agora: Date = new Date()): boolean {
+  return diasSemanaDaAutomacao(automacao.diasSemana).includes(diaSemanaSP(agora));
 }

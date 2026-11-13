@@ -5,9 +5,10 @@ import { executarBuscaAutomaticaLeads } from "@/lib/lead-auto-search";
 
 export const dynamic = "force-dynamic";
 
-// De hora em hora: só busca de fato no dia/hora configurados em /admin/leads/importar
-// (LeadAutomation.diasSemana/hora, horário de SP), até o limite de contato do dia ou a cota do
-// Google acabar. Pausável pelo mesmo painel (LeadAutomation.ativo). Nunca envia mensagem.
+// Diário, 6h BRT (1x/dia: compatível com Vercel Hobby, sem precisar de Pro). Só busca de fato nos
+// dias da semana configurados em /admin/leads/importar (LeadAutomation.diasSemana, horário de SP),
+// varrendo todas as cidades até a cota do Google acabar. Pausável pelo mesmo painel
+// (LeadAutomation.ativo). Nunca envia mensagem.
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const resultado = await executarBuscaAutomaticaLeads();
